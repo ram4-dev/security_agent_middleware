@@ -1,6 +1,7 @@
 // Admin shell. Sidebar + header + main slot. Server component — the proxy
 // (src/proxy.ts) has already gated access by the time we render here.
 /* eslint-disable react/jsx-no-comment-textnodes */
+import Image from "next/image";
 import Link from "next/link";
 import { isAuthConfigured, signOut } from "@/auth";
 import { ensureAdminSession } from "@/lib/admin-session";
@@ -113,15 +114,15 @@ function SignOutButton() {
   );
 }
 
-// Small inline copy of the landing wordmark so the admin shell stays
-// self-contained — extracting would mean touching the landing file too.
 function TranqueraMark({ className = "" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 80 60" fill="currentColor" aria-hidden className={className}>
-      <rect x="20" y="0" width="10" height="60" />
-      <rect x="50" y="0" width="10" height="60" />
-      <rect x="15" y="12" width="50" height="10" />
-      <rect x="15" y="38" width="50" height="10" />
-    </svg>
+    <Image
+      src="/logo.png"
+      alt="Tranquera"
+      width={64}
+      height={64}
+      className={`${className} object-contain`}
+      style={{ borderRadius: "var(--radius)" }}
+    />
   );
 }

@@ -1,6 +1,7 @@
 // `//` is a deliberate visual token from the design system (see
 // identidad/design.md § 3, "Comments tipo código"), not stray JS comments.
 /* eslint-disable react/jsx-no-comment-textnodes */
+import Image from "next/image";
 import Link from "next/link";
 import { WaveTerrain } from "@/components/wave-terrain";
 
@@ -95,21 +96,19 @@ function Wordmark({ size = "sm" }: { size?: "sm" | "lg" }) {
   );
 }
 
-// Logo construction per identidad/design.md § 4:
-//   8u × 6u box, 2 postes (1u × 6u) separated by 2u, 2 travesaños (5u × 1u)
 function TranqueraMark({ className = "" }: { className?: string }) {
+  // Tamaños raster grandes para que la versión hero (h-24 w-24) se vea
+  // nítida en pantallas retina.
   return (
-    <svg
-      viewBox="0 0 80 60"
-      fill="currentColor"
-      aria-hidden
-      className={className}
-    >
-      <rect x="20" y="0" width="10" height="60" />
-      <rect x="50" y="0" width="10" height="60" />
-      <rect x="15" y="12" width="50" height="10" />
-      <rect x="15" y="38" width="50" height="10" />
-    </svg>
+    <Image
+      src="/logo.png"
+      alt="Tranquera"
+      width={256}
+      height={256}
+      priority
+      className={`${className} object-contain`}
+      style={{ borderRadius: "var(--radius)" }}
+    />
   );
 }
 
@@ -156,8 +155,8 @@ function Hero() {
           style={{ animationDelay: "240ms" }}
         >
           La capa de alineamiento entre tu equipo y Claude Code. Los LLMs no
-          tienen contexto organizacional por defecto — con Tranquera, siempre
-          lo tienen.
+          tienen contexto organizacional por defecto — con Tranquera, siempre lo
+          tienen.
         </p>
 
         {/* CTAs */}
@@ -238,7 +237,13 @@ function DemoStrip() {
   );
 }
 
-function DemoCell({ label, children }: { label: string; children: React.ReactNode }) {
+function DemoCell({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex flex-col gap-3 bg-paper p-5 md:p-6">
       <span className="font-mono text-[11px] uppercase tracking-wider text-graphite">
@@ -268,7 +273,8 @@ function ProblemSection() {
       tag: "01 · credencial",
       title: "Leak de AWS key",
       prompt: "ayudame a debuggear esto: AKIAIOSFODNN7EXAMPLE",
-      consequence: "El dev no sabe que esto viola la política de credenciales. Tranquera lo detecta antes de que llegue al modelo.",
+      consequence:
+        "El dev no sabe que esto viola la política de credenciales. Tranquera lo detecta antes de que llegue al modelo.",
       action: "BLOCK",
       rule: "aws-access-key",
     },
@@ -276,7 +282,8 @@ function ProblemSection() {
       tag: "02 · cliente",
       title: "Mención de cliente real",
       prompt: "escribime un email para Acme Corp explicando el bug",
-      consequence: "El dev no tenía forma de saber que mencionar ese cliente estaba fuera de policy. Tranquera lo señala.",
+      consequence:
+        "El dev no tenía forma de saber que mencionar ese cliente estaba fuera de policy. Tranquera lo señala.",
       action: "REDACT",
       rule: "client-name",
     },
@@ -284,7 +291,8 @@ function ProblemSection() {
       tag: "03 · secreto",
       title: "Paste accidental de .env",
       prompt: "no funciona el .env: DATABASE_URL=postgres://admin:Pa$$…",
-      consequence: "Un paste accidental que el dev no notó. Tranquera alinea la intención con la política antes de que llegue a Anthropic.",
+      consequence:
+        "Un paste accidental que el dev no notó. Tranquera alinea la intención con la política antes de que llegue a Anthropic.",
       action: "BLOCK",
       rule: "dotenv-paste",
     },
@@ -432,8 +440,8 @@ function Cascade() {
         <CascadeCell {...steps[2]} />
       </div>
       <p className="mt-6 max-w-3xl font-mono text-xs leading-relaxed text-graphite">
-        // si una capa más barata ya decidió, no se llama a la siguiente. Costo y
-        latencia importan.
+        // si una capa más barata ya decidió, no se llama a la siguiente. Costo
+        y latencia importan.
       </p>
     </div>
   );
@@ -553,9 +561,9 @@ function InstallSection() {
         </div>
 
         <p className="mt-10 max-w-3xl font-mono text-xs leading-relaxed text-graphite">
-          // requiere node 18+ (que ya tenés si usás claude code).
-          compatible con linux, macos y wsl. el token vive en
-          ~/.tranquera/config.json con permisos 0600.
+          // requiere node 18+ (que ya tenés si usás claude code). compatible
+          con linux, macos y wsl. el token vive en ~/.tranquera/config.json con
+          permisos 0600.
         </p>
       </div>
     </section>
@@ -578,7 +586,7 @@ function InstallTerminal() {
           <span className="text-paper">npx tranquera setup</span>
         </div>
         <pre className="mt-5 whitespace-pre-wrap text-[13px] leading-relaxed text-paper/75 md:text-sm">
-{`  ▎ tranquera · login
+          {`  ▎ tranquera · login
   └─ app  https://tranquera.app
 
   · iniciando device flow…  ok
@@ -604,7 +612,15 @@ function InstallTerminal() {
   );
 }
 
-function InstallStep({ n, title, body }: { n: string; title: string; body: string }) {
+function InstallStep({
+  n,
+  title,
+  body,
+}: {
+  n: string;
+  title: string;
+  body: string;
+}) {
   return (
     <div className="flex flex-col gap-2 border-t-2 border-ink pt-4">
       <span className="font-mono text-sm text-graphite">{n} ·</span>
@@ -808,8 +824,8 @@ function ManifestoSection() {
             // manifiesto
           </span>
           <p className="max-w-3xl text-2xl font-medium leading-snug md:text-3xl">
-            No es vigilancia. No es un escudo. Es el punto donde el dev, la
-            org y el modelo quedan{" "}
+            No es vigilancia. No es un escudo. Es el punto donde el dev, la org
+            y el modelo quedan{" "}
             <em className="not-italic underline decoration-graphite underline-offset-[10px]">
               alineados
             </em>{" "}
@@ -905,7 +921,8 @@ function SiteFooter() {
           <div className="flex flex-col gap-3">
             <Wordmark />
             <p className="max-w-md text-sm leading-relaxed text-graphite-dark">
-              Tranquera alinea al dev, la org y el modelo. Un paso controlado entre la intención y la respuesta.
+              Tranquera alinea al dev, la org y el modelo. Un paso controlado
+              entre la intención y la respuesta.
             </p>
           </div>
           <p className="max-w-md font-mono text-xs leading-relaxed text-graphite">
@@ -999,15 +1016,11 @@ function ActionPill({ action, rule }: { action: Action; rule?: string }) {
   };
   return (
     <div className="inline-flex items-center gap-3 font-mono text-xs uppercase tracking-wider">
-      <span
-        aria-hidden
-        className={`h-4 w-1 ${indicator[action]}`}
-      />
+      <span aria-hidden className={`h-4 w-1 ${indicator[action]}`} />
       <span className={`text-ink ${weight[action]}`}>{action}</span>
       {rule ? (
         <span className="text-graphite normal-case">
-          → rule.id ={" "}
-          <span className="text-ink">&quot;{rule}&quot;</span>
+          → rule.id = <span className="text-ink">&quot;{rule}&quot;</span>
         </span>
       ) : null}
     </div>

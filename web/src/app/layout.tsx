@@ -23,22 +23,22 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: "/logo.ico", sizes: "any" },
-      { url: "/logo.jpeg", type: "image/jpeg" },
+      { url: "/logo.png", type: "image/png" },
     ],
-    apple: "/logo.jpeg",
+    apple: "/logo.png",
   },
   openGraph: {
     title: "Tranquera — Un paso controlado entre la intención y la respuesta",
     description:
       "El firewall de Claude Code corporativo. Reglas no-code, redacción en runtime y auditoría completa.",
-    images: ["/logo.jpeg"],
+    images: ["/logo.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Tranquera",
     description:
       "El firewall de Claude Code corporativo. Reglas no-code, redacción en runtime y auditoría completa.",
-    images: ["/logo.jpeg"],
+    images: ["/logo.png"],
   },
 };
 
