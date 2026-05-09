@@ -28,7 +28,8 @@ Layer 1: Claude Code (cliente)                                  │
 | Carpeta | Qué hay |
 |---|---|
 | `specs/` | Spec-Driven Development. **Fuente de verdad**. Empezá por [`specs/README.md`](./specs/README.md) y [`specs/00-constitution.md`](./specs/00-constitution.md). |
-| `web/` | Next.js 16 + Tailwind 4 + Prisma 7. Landing pública, admin web y proxy `/v1/messages`. |
+| `web/` | Next.js 16 + Tailwind 4 + Prisma 7. Landing pública y admin web. |
+| `interceptor/` | **En desarrollo** (branch separada). Python 3.12 + FastAPI. Proxy modificable Layer 2 — recibe `POST /v1/messages` de Claude Code, aplica la cascada Regex → Pattern → Haiku y reenvía a Anthropic. Comparte la misma DB que `web/`. |
 | `identidad/` | Sistema de marca. [`identidad/design.md`](./identidad/design.md) es input obligatorio para todo lo que tenga UI o copy. |
 | `research/` | Landscape de mercado, papers y datasets. **No tocar** salvo agregar notas. |
 | `.claude/`, `.agents/` | Agents y skills compartidos para Claude Code del equipo. |
@@ -46,10 +47,10 @@ pnpm db:generate     # genera el cliente Prisma
 pnpm dev             # http://localhost:3000
 ```
 
-Para demo del proxy vía Claude Code real (ver `specs/06-pitch-demo.md`):
+Para demo del proxy vía Claude Code real (ver `specs/06-pitch-demo.md`) hace falta el `interceptor/` corriendo. Cuando esté commiteado a `main`:
 
 ```bash
-export ANTHROPIC_BASE_URL=http://localhost:3000
+export ANTHROPIC_BASE_URL=<URL del interceptor>     # no el de Next.js
 claude "explicame el patrón Observer en TypeScript"
 ```
 

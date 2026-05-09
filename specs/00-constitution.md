@@ -113,9 +113,12 @@ request → [Regex layer ~5ms]
 | Auth (admin) | **Supabase Auth** (`@supabase/ssr`) con magic links | Solo se usa en `/admin`. En local hay bypass mock |
 | Realtime (live feed) | **Polling 2s** en v1; Supabase Realtime cuando deploye en prod | Evita acoplar a una sola plataforma en local |
 | Frontends | **Next.js 16 App Router** + **shadcn/ui** + **Tailwind 4** | Standard, deploy directo a Vercel |
-| Hosting | **Vercel** (Functions Node runtime — necesitamos drivers) | Preview por PR para QA paralelo |
-| Package manager | **pnpm** | Monorepo limpio si dividimos en `apps/` |
-| Lenguaje | TypeScript estricto en frontend y backend | — |
+| Interceptor (Layer 2) | **Python 3.12 + FastAPI** | Equipo del interceptor lo dev en paralelo. Comparte la misma Postgres que `web/` (lee `policies`, escribe `interactions`) — no usa Prisma; conector Python directo (asyncpg / SQLAlchemy) |
+| Hosting (web) | **Vercel** (Functions Node runtime — necesitamos drivers) | Preview por PR para QA paralelo |
+| Hosting (interceptor) | A definir (Fly.io / Railway / contenedor en VPS) | Vercel no aplica para el proxy Python; latencia <200ms requiere runtime de larga vida con prompt-cache de Haiku activo |
+| Package manager (web) | **pnpm** | — |
+| Package manager (interceptor) | **uv** o **poetry** | A definir por el dev del interceptor |
+| Lenguajes | TypeScript estricto en `web/`. Python 3.12 con `mypy --strict` en `interceptor/` | — |
 
 > **Out:** Neo4j / cualquier graph DB. La idea original de "grafo de roles + recursos" se reemplaza por reglas declarativas en Postgres + cascada del proxy.
 
@@ -139,18 +142,24 @@ request → [Regex layer ~5ms]
 ```
 platanus-hack-26-ar-team-22/
 ├── docker-compose.yml        # Postgres + pgvector para dev local
-├── specs/                    # estos specs
+├── specs/                    # estos specs (fuente de verdad)
+├── identidad/                # sistema de marca (paleta, wordmark, voz)
 ├── research/                 # ya existe, no tocar
-├── web/                      # Next.js 16 — landing + admin (single app)
+├── web/                      # Next.js 16 — landing + admin
 │   ├── prisma/
-│   │   ├── schema.prisma     # modelos canónicos
-│   │   └── migrations/       # bloque manual al final: ivfflat + match_policies
+│   │   ├── schema.prisma     # modelos canónicos (TS y Python siguen este shape)
+│   │   └── migrations/       # SQL idempotente: extension vector, match_policies, etc.
+│   └── src/
+├── interceptor/              # Python 3.12 + FastAPI — proxy modificable (Layer 2)
+│   │                         # En desarrollo en branch separada; aún no commiteado a main.
+│   │                         # Lee/escribe la misma DB que `web/` vía DSN compartido.
+│   ├── pyproject.toml
 │   └── src/
 ├── seeds/                    # corpus inicial de reglas (NL + regex/pattern)
 └── scripts/                  # seed-vdb, run-suggestor, etc.
 ```
 
-> Para el hack arrancamos con `web/` único (ya creado con `create-next-app`). La extracción a `packages/{interceptor,db,shared}` queda como refactor opcional si sobra tiempo.
+> El schema Prisma en `web/prisma/` es la **fuente de verdad** del data model. El `interceptor/` accede a la misma DB pero **no** ejecuta migraciones — `web/prisma/migrations/` es la única vía. Los enums, tabla `policies`, función `match_policies` y constraints viven ahí.
 
 ### Naming
 - Acciones del proxy: literal strings `"BLOCK" | "REDACT" | "WARN" | "LOG"` (uppercase, viajan así en JSON y en DB).

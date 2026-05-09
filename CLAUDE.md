@@ -21,7 +21,8 @@ El repo está organizado:
 - `specs/` — Spec-Driven Development. Cada componente en su propio `.md`.
 - `identidad/` — sistema de marca de Tranquera (tokens, wordmark, voz).
 - `research/` — landscape, papers, datasets. **No tocar** salvo agregar notas explícitas.
-- `web/` — Next.js 16 + Tailwind 4 + TS, scaffold para landing + admin + proxy.
+- `web/` — Next.js 16 + Tailwind 4 + TS — landing + admin web.
+- `interceptor/` — Python 3.12 + FastAPI — proxy Layer 2. **En desarrollo en branch separada, aún no commiteado a `main`**. Comparte la misma DB que `web/` vía DSN; el schema vive en `web/prisma/` (única fuente de verdad de migraciones).
 
 Project name y descripción definitivos en `platanus-hack-project.json`.
 
@@ -35,7 +36,7 @@ Project name y descripción definitivos en `platanus-hack-project.json`.
 
 ## Convenciones (resumidas)
 
-- **Idioma**: código + comentarios en inglés. Specs, copy de UI, errores user-facing en español rioplatense.
+- **Idioma**: código + comentarios en inglés (TS en `web/`, Python en `interceptor/`). Specs, copy de UI, errores user-facing en español rioplatense.
 - **Branching**: `feature/<spec-id>-<slug>`. 1 PR ↔ 1 task.
 - **Acciones del proxy**: literal strings `"BLOCK" | "REDACT" | "WARN" | "LOG"` (uppercase, viajan así en JSON y en DB).
 - **Tablas**: `snake_case` plural (`policies`, `interactions`, `members`, `rule_suggestions`).
