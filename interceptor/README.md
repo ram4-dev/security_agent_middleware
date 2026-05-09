@@ -1,17 +1,23 @@
-# Tranquera — interceptor (v0.1)
+# Tranquera — interceptor (v0.2)
 
 Proxy Python que se mete entre Claude Code y `api.anthropic.com`. Lee
 políticas de Postgres (la DB que comparte con `web/`) y aplica la
 cascada antes de forwardear.
 
-**v0.1 alcance**: Layer 1 (regex) con acciones `BLOCK` y `LOG` (passthrough).
-REDACT, WARN, pattern y NL/Haiku quedan para próximas versiones.
+**v0.2 alcance**:
+
+- **Layer 1 — Regex**: matchers literales contra el prompt. Acciones `BLOCK` y `LOG` (passthrough).
+- **Layer 3 — NL Judge** (Haiku 4.5): si regex no bloqueó y hay reglas en lenguaje natural activas, manda el prompt + reglas a Haiku en una sola call y aplica el resultado.
+- Logging estructurado (`[req] [regex] [nl] [judge] [done]`) para tracear cada paso.
+
+REDACT, WARN, Layer 2 (pattern matcher) y atribución por dev (header
+`x-tranquera-key` o path-based) quedan para próximas versiones.
 
 ## Stack
 
 - Python 3.12 + FastAPI + uvicorn.
 - SQLModel + asyncpg sobre la Postgres compartida con `web/`.
-- httpx async para reenviar a Anthropic.
+- httpx async para reenviar a Anthropic **y** para llamar al judge (Haiku 4.5).
 - `uv` para deps.
 
 > El schema canónico vive en `web/prisma/schema.prisma`. Este servicio
@@ -31,11 +37,13 @@ Después, el interceptor:
 
 ```bash
 cd interceptor
-cp .env.example .env        # editar si hace falta
+cp .env.example .env        # editar — ANTHROPIC_JUDGE_API_KEY es la única clave a pegar
 uv sync                     # instala deps
 uv run python scripts/seed_policies.py   # 4 reglas regex de credenciales
 uv run uvicorn app.main:app --reload --port 8080
 ```
+
+> **Habilitar el NL judge** (opcional pero recomendado): pegá una API key de Anthropic en `ANTHROPIC_JUDGE_API_KEY` (sacala de <https://console.anthropic.com/settings/keys>). Si está vacía, el proxy se comporta como v0.1 (solo regex + passthrough). El judge corre con la key del servidor — no depende de las credenciales del cliente, así que evita problemas de OAuth scopes y betas no habilitadas.
 
 ## Smoke test
 
@@ -89,13 +97,14 @@ del modelo.
 ```
 interceptor/
 ├── app/
-│   ├── main.py             # FastAPI app + POST /v1/messages
+│   ├── main.py             # FastAPI app + POST /v1/messages (cascada)
 │   ├── config.py           # settings desde .env
 │   ├── db.py               # async engine + session
 │   ├── enums.py            # mirrors de los enums Postgres
 │   ├── models.py           # SQLModel: Policy (read), Interaction (write)
 │   ├── schemas.py          # Pydantic shapes de la Messages API
-│   ├── cascade.py          # Layer 1 regex matcher
+│   ├── cascade.py          # Layer 1 — regex matcher
+│   ├── nl_layer.py         # Layer 3 — Haiku 4.5 judge (httpx → Anthropic)
 │   ├── redact.py           # redacción del prompt antes de persistir
 │   ├── block_response.py   # synthesizer de Message en BLOCK
 │   └── upstream.py         # cliente httpx contra api.anthropic.com
@@ -130,6 +139,7 @@ railway init                  # crea proyecto, o `railway link` para uno existen
 railway variables \
   --set DATABASE_URL='postgresql://postgres:<password>@<host>:5432/postgres' \
   --set ANTHROPIC_UPSTREAM_URL='https://api.anthropic.com' \
+  --set ANTHROPIC_JUDGE_API_KEY='sk-ant-...' \
   --set DEFAULT_ORG_ID='demo'
 railway up
 ```
@@ -162,8 +172,9 @@ ANTHROPIC_BASE_URL=https://<tu-dominio>.up.railway.app claude "AKIAIOSFODNN7EXAM
 
 ## Próximas versiones
 
-- v0.2 — REDACT mutator + WARN.
-- v0.3 — Layer 2 (pattern matcher para filename/path).
-- v0.4 — Layer 3 (Haiku judge sobre top-K NL via pgvector).
-- v0.5 — streaming (`stream: true` para chat normal del CLI).
-- v0.6 — fail-closed real cuando upstream timeoutea.
+- v0.3 — REDACT mutator + WARN.
+- v0.4 — Layer 2 (pattern matcher para filename/path).
+- v0.5 — atribución por dev (header `x-tranquera-key` o path-based) usando los CLI tokens del back-office.
+- v0.6 — embedding-based pre-filter (pgvector top-K) antes del judge.
+- v0.7 — streaming (`stream: true` para chat normal del CLI).
+- v0.8 — fail-closed real cuando upstream timeoutea.

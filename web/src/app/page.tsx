@@ -528,7 +528,7 @@ function InstallSection() {
         <SectionHeading
           tag="instalá tranquera"
           title="Para tu dev, todo se reduce a un comando."
-          subtitle="Sin SDK nuevo, sin wrapper, sin re-entrenar a nadie. El proxy intercepta cada prompt, aplica las reglas de tu org y devuelve la respuesta normal de Claude. El dev sigue escribiendo `claude` igual que siempre."
+          subtitle="Sin SDK nuevo, sin wrapper, sin re-entrenar a nadie. El admin lo invita por email; el dev se loguea con Google una sola vez. Después, cada prompt de `claude` queda atribuido a su cuenta y pasa por las reglas de la org."
         />
 
         <InstallTerminal />
@@ -536,24 +536,25 @@ function InstallSection() {
         <div className="mt-10 grid gap-6 md:grid-cols-3">
           <InstallStep
             n="01"
-            title="Detecta tu shell"
-            body="zsh, bash o fish. El CLI escribe la export en el rc correcto y verifica que no esté ya configurado."
+            title="Login con Google"
+            body="El CLI abre el browser, el dev autoriza con su cuenta. El admin tiene que haberlo agregado antes desde /admin/team."
           />
           <InstallStep
             n="02"
-            title="Configura ANTHROPIC_BASE_URL"
-            body="Una variable estándar de Anthropic. Cero invasión: si te arrepentís, dos líneas en tu rc y volvés al estado anterior."
+            title="ANTHROPIC_BASE_URL al rc"
+            body="Variable estándar de Anthropic. Cero invasión: si te arrepentís, dos líneas en tu rc y volvés al estado anterior."
           />
           <InstallStep
             n="03"
-            title="Verifica el proxy"
-            body="Pinguea /health del firewall. Si responde, tu próxima request de Claude Code ya pasa por tranquera."
+            title="Atribución por dev"
+            body="El token vinculado al CLI hace que cada request quede asociada al dev correcto en el back-office. El admin ve quién hizo qué."
           />
         </div>
 
         <p className="mt-10 max-w-3xl font-mono text-xs leading-relaxed text-graphite">
           // requiere node 18+ (que ya tenés si usás claude code).
-          compatible con linux, macos y wsl.
+          compatible con linux, macos y wsl. el token vive en
+          ~/.tranquera/config.json con permisos 0600.
         </p>
       </div>
     </section>
@@ -568,7 +569,7 @@ function InstallTerminal() {
     >
       <div className="flex items-center justify-between border-b border-paper/10 px-5 py-3 font-mono text-[11px] uppercase tracking-wider text-paper/55">
         <span>// terminal</span>
-        <span className="hidden md:inline">// onboarding · ~ 10 segundos</span>
+        <span className="hidden md:inline">// onboarding · ~ 30 segundos</span>
       </div>
       <div className="px-6 py-7 font-mono text-sm leading-relaxed text-paper md:px-10 md:py-9 md:text-base">
         <div className="flex items-baseline gap-3">
@@ -576,10 +577,21 @@ function InstallTerminal() {
           <span className="text-paper">npx tranquera setup</span>
         </div>
         <pre className="mt-5 whitespace-pre-wrap text-[13px] leading-relaxed text-paper/75 md:text-sm">
-{`  ▎ tranquera · setup
-  ├─ proxy  https://platanus-hack-26-ar-team-22-production.up.railway.app
-  ├─ shell  zsh
-  └─ rc     ~/.zshrc
+{`  ▎ tranquera · login
+  └─ app  https://tranquera.app
+
+  · iniciando device flow…  ok
+
+  Abrí el browser y aprobá:
+      https://tranquera.app/cli/connect?code=KXZ2-RZ96
+
+  · esperando aprobación…  ok
+
+  ▎ tranquera · setup
+  ├─ proxy   https://proxy.tranquera.app
+  ├─ shell   zsh
+  ├─ rc      ~/.zshrc
+  └─ member  jaime@acme.com · org=acme
 
   · agregué la export a ~/.zshrc
   · verificando proxy…  ok

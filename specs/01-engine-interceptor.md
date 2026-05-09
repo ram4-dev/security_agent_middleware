@@ -2,7 +2,9 @@
 
 > El motor central. Es un proxy compatible con la **Anthropic Messages API**. Claude Code apunta acá vía `ANTHROPIC_BASE_URL` y cada request pasa por la cascada de detección antes (o en lugar) de llegar a Anthropic.
 
-> **Stack de implementación**: **Python 3.12 + FastAPI**. Vive en `interceptor/` de este repo (en desarrollo en branch separada — aún no en `main`). Comparte la misma Postgres que `web/` vía DSN; **no** ejecuta migraciones (la fuente de verdad del schema es `web/prisma/`). Las tasks T1–T9 abajo describen comportamiento esperado y son agnósticas del stack — el dev del interceptor adapta los términos TS al ecosistema Python (FastAPI route en lugar de Next Route Handler, asyncpg/SQLAlchemy en lugar de Prisma, pytest en lugar de vitest, uv/poetry en lugar de pnpm).
+> **Stack de implementación**: **Python 3.12 + FastAPI**. Vive en `interceptor/` y está deployado en Railway. Comparte la misma Postgres que `web/` vía DSN; **no** ejecuta migraciones (la fuente de verdad del schema es `web/prisma/`). Las tasks T1–T9 abajo describen comportamiento esperado y son agnósticas del stack — el dev del interceptor adapta los términos TS al ecosistema Python (FastAPI route en lugar de Next Route Handler, asyncpg/SQLAlchemy en lugar de Prisma, pytest en lugar de vitest, uv/poetry en lugar de pnpm).
+>
+> **Estado actual (v0.2)**: Layer 1 (regex) + Layer 3 (Haiku judge) implementadas con acciones BLOCK y LOG. REDACT, WARN, Layer 2 (pattern) y atribución por dev pendientes — ver `interceptor/README.md` para el roadmap de versiones.
 
 ---
 

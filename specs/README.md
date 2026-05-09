@@ -26,18 +26,20 @@ Layer 1: Claude Code (cliente)                                  │
 
 ## Índice
 
-| # | Componente | Archivo | Bloqueadores |
+| # | Componente | Archivo | Estado |
 |---|---|---|---|
-| 00 | Constitution (principios, stack, convenciones) | [00-constitution.md](./00-constitution.md) | — |
-| 01 | Engine / Interceptor (proxy modificable) | [01-engine-interceptor.md](./01-engine-interceptor.md) | 00, 02 |
-| 02 | VDB Bootstrap (reglas NL + embeddings) | [02-vdb-bootstrap.md](./02-vdb-bootstrap.md) | 00 |
-| 03 | Landing Page | [03-landing-page.md](./03-landing-page.md) | 00, identidad |
-| 04 | Admin Web (visual rule builder + dashboards + approval queue) | [04-admin-web.md](./04-admin-web.md) | 00, 01, 02, 08, identidad |
-| 06 | Pitch & Demo | [06-pitch-demo.md](./06-pitch-demo.md) | todos, identidad |
-| 07 | Requirements & Docs técnicos | [07-requirements-docs.md](./07-requirements-docs.md) | 00, 01 |
-| 08 | AI Suggestor (Layer 4) | [08-ai-suggestor.md](./08-ai-suggestor.md) | 00, 01, 02 |
+| 00 | Constitution (principios, stack, convenciones) | [00-constitution.md](./00-constitution.md) | living |
+| 01 | Engine / Interceptor (proxy modificable) | [01-engine-interceptor.md](./01-engine-interceptor.md) | v0.2 implementado (regex + NL judge); roadmap en `interceptor/README.md` |
+| 02 | VDB Bootstrap (reglas NL + embeddings) | [02-vdb-bootstrap.md](./02-vdb-bootstrap.md) | parcial (judge sin pre-filter de embeddings, viaja todas las reglas activas en el prompt) |
+| 03 | Landing Page | [03-landing-page.md](./03-landing-page.md) | v1 |
+| 04 | Admin Web | [04-admin-web.md](./04-admin-web.md) | T1, T2, T5, T6, T9, T10 hechos. Auth.js + Google live. Dashboard (T3/T4) + Suggestions (T7) + WARN notif (T8) pendientes |
+| 06 | Pitch & Demo | [06-pitch-demo.md](./06-pitch-demo.md) | draft (script y runbook a escribir antes del pitch) |
+| 07 | Requirements & Docs técnicos | [07-requirements-docs.md](./07-requirements-docs.md) | draft |
+| 08 | AI Suggestor (Layer 4) | [08-ai-suggestor.md](./08-ai-suggestor.md) | draft (gdoc-import landed como variante) |
 
 > El antiguo spec `05-user-web.md` (playground multi-rol) fue retirado el 2026-05-09. El "user" final del producto es el dev que usa Claude Code real, no un playground separado.
+
+> **Auth + multi-tenancy** (Auth.js v5 + Google OAuth + CLI device flow): no tiene spec dedicado, vive como sección dentro de `04-admin-web.md` (modelo de session, callback de org-resolution, tablas `cli_tokens`/`cli_device_codes`). Si se vuelve grande, partir a `09-auth-and-cli.md`.
 
 ---
 

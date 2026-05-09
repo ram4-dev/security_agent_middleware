@@ -32,7 +32,7 @@ Sin admin web, no se pueden modificar reglas sin meterse a SQL. Para la demo es 
 
 ## Non-Goals
 
-- No auth real con SSO (Supabase Auth con magic link mock está OK).
+- No SSO empresarial (SAML/OIDC enterprise) — Auth.js v5 con Google OAuth está OK.
 - No bulk import / CSV upload de reglas.
 - No audit log visual de cambios al admin (se ve en Supabase directo).
 - No edición técnica de regex crudas (escondidas detrás de presets); si un admin quiere regex custom abrimos issue post-hack.
@@ -50,14 +50,16 @@ Sin admin web, no se pueden modificar reglas sin meterse a SQL. Para la demo es 
 
 ## Acceptance Criteria
 
-- [ ] Login en `/admin` con magic link mock (cualquier email + código `123456` hardcodeado).
+- [x] Login en `/admin` con Google OAuth (Auth.js v5). Modo demo bypass con `?demo=1` mientras `GOOGLE_CLIENT_ID` esté vacío.
+- [x] Primer login Google sin invitación previa → crea org nueva con el user como admin owner (`src/lib/org-resolution.ts`).
+- [x] Admin invita devs por email desde `/admin/team` → quedan en estado pendiente hasta su primer login.
 - [ ] `/admin/dashboard` muestra 4 KPIs: total events 24h, % BLOCK, % REDACT, latencia p50 del proxy.
 - [ ] `/admin/dashboard` muestra gráfico de barras con acciones de los últimos 100 events.
-- [ ] `/admin/rules` lista todas las reglas con `slug`, `layer`, `category`, `default_action`, toggle on/off.
-- [ ] Crear regla con el wizard visual (3 tipos arriba) → upsert en `policies` vía Prisma (con re-embedding si es NL). Toast de confirmación.
-- [ ] `/admin/events` muestra feed live (Supabase Realtime) con `created_at`, `action` (badge color), `rule_hits[]`, `prompt_redacted` (truncado 200 chars), botón "ver detalle" → modal con todo el evento.
+- [x] `/admin/rules` lista todas las reglas con `slug`, `layer`, `domain`, `default_action`, toggle on/off.
+- [x] Crear regla NL desde el form → upsert en `policies` vía Prisma. Cambios reflejados en el próximo prompt del proxy (sin caché).
+- [x] `/admin/events` muestra feed con polling 3s. `created_at`, `action` (badge color), `policy_hits[]`, `prompt_redacted` (truncado).
 - [ ] `/admin/suggestions` lista propuestas del Layer 4 con preview de matches retroactivos y CTAs Aceptar / Rechazar / Editar.
-- [ ] Todas las pantallas funcionan en desktop Chrome 130+.
+- [x] Todas las pantallas funcionan en desktop Chrome 130+.
 
 ---
 
@@ -67,29 +69,38 @@ Sin admin web, no se pueden modificar reglas sin meterse a SQL. Para la demo es 
 
 | Ruta | Función |
 |---|---|
-| `/admin` → redirect | Si no logueado → `/admin/login`, si logueado → `/admin/dashboard` |
-| `/admin/login` | Magic link mock |
-| `/admin/dashboard` | KPIs + gráfico |
-| `/admin/rules` | Tabla de reglas + wizard de creación / edición |
-| `/admin/events` | Feed live con filtros por acción |
-| `/admin/suggestions` | Approval queue del AI Suggestor |
+| `/admin` → redirect | Si no logueado → `/admin/login` (modo Google) o landing (modo demo); si logueado → `/admin/events` |
+| `/admin/login` | Button "Continuar con Google" (Auth.js v5). En modo demo no se sirve. |
+| `/admin/events` | Feed con polling 3s, filtros por acción. |
+| `/admin/rules` | Tabla de reglas + form NL para crear/editar. |
+| `/admin/team` | Lista de admins/devs + form para invitar dev por email. |
+| `/admin/suggestions` | Approval queue del AI Suggestor (gdoc import por ahora). |
+| `/admin/dashboard` | KPIs + gráfico. **Pendiente**. |
+| `/cli/connect?code=XXXX` | Browser-side del device flow del CLI. Requiere Google login. |
 
 ### API endpoints (Next.js Route Handlers)
 
 ```
-GET    /api/admin/metrics                       → KPIs últimas 24h
-GET    /api/admin/events?limit=100&action=BLOCK → últimos events filtrables
-GET    /api/admin/events/:traceId               → detalle de un evento
+GET    /api/admin/metrics                       → KPIs últimas 24h (pendiente)
+GET    /api/admin/events?since=&action=&limit=  → events para el feed (polling)
 GET    /api/admin/rules                          → lista
-POST   /api/admin/rules                          → crear (re-embed si layer='nl')
-PATCH  /api/admin/rules/:id                      → editar
+POST   /api/admin/rules                          → crear regla NL
+PATCH  /api/admin/rules/:id                      → editar / toggle isActive
 DELETE /api/admin/rules/:id                      → eliminar
-GET    /api/admin/suggestions                    → cola de Layer 4
+GET    /api/admin/team                            → lista de members
+POST   /api/admin/team                            → invitar dev por email
+DELETE /api/admin/team/:id                        → remover member (no se puede el último admin)
+GET    /api/admin/suggestions                    → cola del Suggestor / gdoc import
 POST   /api/admin/suggestions/:id/accept         → promover a regla activa
 POST   /api/admin/suggestions/:id/reject         → descartar (con motivo)
+POST   /api/cli/device/start                     → device flow del CLI: nuevo user_code/device_code
+GET    /api/cli/device/poll?device_code=…        → polling del CLI hasta approved
+GET    /api/cli/me                               → bearer-auth, devuelve member
+POST   /api/cli/logout                           → bearer-auth, revoca cli_token
+GET    /api/auth/[...nextauth]                   → Auth.js handlers (Google OAuth)
 ```
 
-Todos protegidos por middleware que valida sesión Supabase mock (cookie `admin_session`) y filtra por `org_id` del usuario logueado.
+Todos los `/api/admin/*` protegidos por `proxy.ts` (Next 16 middleware renombrado): si `GOOGLE_CLIENT_ID` está seteado, valida JWT de Auth.js; si no, valida cookie `admin_session=demo`. En cualquier caso, el handler filtra por `org_id` del session resuelto.
 
 ### Componentes UI clave
 
@@ -101,7 +112,8 @@ Todos protegidos por middleware que valida sesión Supabase mock (cookie `admin_
   - Preset: galería de cards (`AWS Access Key`, `Email`, `JWT`, `Credit Card`, `IBAN`, `CUIT/CUIL`, ...).
   - Filename: input + chips de presets (`.env`, `id_rsa`, `*.pem`).
   - NL: textarea con ejemplos placeholder + botón "Probar contra los últimos 100 events" antes de guardar.
-- `<EventsLiveFeed>` — Supabase channel suscrito, agrega filas al top con animación.
+- `<EventsFeed>` — client component con polling cada 3s a `/api/admin/events?since=…`. Anexa filas nuevas al top.
+- `<TeamPanel>` — lista de admins/devs separados, dot verde si el dev ya logueó por primera vez.
 - `<SuggestionCard>` — preview con count de matches retroactivos + 3 ejemplos redactados.
 
 ### Action colors (consistencia con landing y eventos)
@@ -154,7 +166,9 @@ insert into members (org_id, email, role)
 
 > El SQL canónico vive en `web/prisma/migrations/20260509000001_members_and_suggestions/migration.sql`. Acá lo replicamos resumido como referencia.
 
-> **Nota sobre auth real (post-hack)**: cuando integremos Supabase Auth, `members.id` se mapea 1:1 a `auth.users.id` (mismo UUID). Para el hack la auth es mock — magic link con código `123456` hardcodeado, cookie `admin_session` falsa.
+> **Auth real**: implementado con **Auth.js v5 + Google OAuth** (migración `20260509000002_auth_js_tables`). `members.user_id` (FK opcional → `auth_users.id`) se vincula automáticamente al primer login. Mientras `GOOGLE_CLIENT_ID` esté vacío, el modo demo (cookie `admin_session=demo` activada por `?demo=1`) sigue funcionando para el pitch sin requerir setup de OAuth.
+
+> **CLI device flow**: tablas `cli_tokens` + `cli_device_codes` (migración `20260509000004_cli_tokens_and_device_codes`) implementan el OAuth-style device flow para que `npx tranquera setup` pueda autenticar al dev sin tener que pegar API keys a mano.
 
 ---
 
@@ -165,22 +179,24 @@ insert into members (org_id, email, role)
 - **Spec `02-vdb-bootstrap.md`** — para que la tabla `policies` y la función `match_policies` ya existan.
 - **Spec `08-ai-suggestor.md`** — alimenta la approval queue.
 
-## Tasks (paralelizables)
+## Tasks
 
-- [ ] **T1** — Layout admin (`/admin/*`) con sidebar shadcn (Dashboard / Rules / Events / Suggestions), header con email del user logueado y logout. Done: navegación entre las 4 pantallas funciona.
-- [ ] **T2** — Login mock con magic link → cookie `admin_session`. Middleware que protege `/admin/*`. Done: ruta protegida redirige a login si no hay cookie.
-- [ ] **T3** — `/api/admin/metrics` que agrega de `interactions` filtrado por `org_id`. KPIs: total 24h, %BLOCK, %REDACT, p50 latencia total. Done: curl devuelve JSON con shape esperado.
-- [ ] **T4** — `/admin/dashboard` consumiendo T3 con `<KpiCard>` y `<ActionsBarChart>`. Done: pantalla muestra datos reales.
-- [ ] **T5** — `/admin/rules` con tabla + `<RuleWizard>` (3 caminos). Re-embedding en NL via Prisma + provider de embeddings server-side. Done: crear regla NL nueva → aparece en `policies` + visible en próximo `match_policies`.
-- [ ] **T6** — `/admin/events` con `<EventsLiveFeed>` suscrito a Supabase Realtime. Filtros por action. Done: en otra pestaña dispará un BLOCK desde el proxy → la fila aparece sin refresh.
-- [ ] **T7** — `/admin/suggestions` consumiendo `/api/admin/suggestions` + acciones accept/reject/edit. Done: aceptar una sugerencia la convierte en una fila de `policies` con `source='ai-suggestor'`.
-- [ ] **T8** — Notificación visual cuando hay un `WARN` event (toast persistente + badge en sidebar). Done: trigger un WARN → aparece en cualquier pantalla del admin.
+- [x] **T1** — Layout admin (`/admin/*`) con sidebar (Eventos / Reglas / Equipo / Sugerencias), header con org + email + signout.
+- [x] **T2** — Auth.js v5 + Google OAuth con Prisma adapter. `proxy.ts` (Next 16 middleware) protege `/admin/*` con session JWT. Modo demo (cookie mock) como fallback cuando `GOOGLE_CLIENT_ID` está vacío.
+- [ ] **T3** — `/api/admin/metrics` que agrega de `interactions` filtrado por `org_id`. KPIs: total 24h, %BLOCK, %REDACT, p50 latencia total.
+- [ ] **T4** — `/admin/dashboard` consumiendo T3 con `<KpiCard>` y `<ActionsBarChart>`. Pendiente.
+- [x] **T5** — `/admin/rules` con form + tabla. Crear regla NL → upsert en `policies`, próximo prompt del proxy ya la usa (sin caché).
+- [x] **T6** — `/admin/events` con `<EventsFeed>` y polling cada 3s. Filtros por action.
+- [ ] **T7** — `/admin/suggestions` consumiendo `/api/admin/suggestions` + acciones accept/reject/edit. Versión gdoc-import landed; AI Suggestor (spec 08) pendiente.
+- [ ] **T8** — Notificación visual cuando hay un `WARN` event. Pendiente.
+- [x] **T9** — `/admin/team` para invitar devs por email (status pendiente hasta primer login con Google).
+- [x] **T10** — `/cli/connect?code=…` page con server action `approveDeviceCode` para el browser-side del device flow del CLI.
 
 ## Verification
 
-- Login con `admin@team22.dev` + código `123456` → entra al dashboard.
-- Crear regla NL `customer-name-mention` con body "no menciones nombres de clientes" → en `psql` la fila aparece con embedding no null.
-- Mandar request al proxy con `ANTHROPIC_BASE_URL=$URL` y prompt "el cliente Acme me pidió X" → `REDACT` con `policyHits` que incluye la nueva regla.
-- En `/admin/dashboard`, refrescar y ver `% REDACT` subir.
-- En `/admin/events`, ver la fila aparecer en vivo (sin refresh) con badge amarillo.
-- En `/admin/suggestions`, después de correr el Suggestor (spec 08) ≥ 1 vez, ver al menos 1 propuesta con preview.
+- Loguear con Google en `/admin/login` (modo Google) o entrar a `/admin?demo=1` (modo demo). Llegás a `/admin/events`.
+- En `/admin/team` invitar `dev@tu-empresa.com` → aparece como `pendiente` en la lista.
+- Crear regla NL `customer-name-mention` con body "no menciones nombres de clientes" → fila aparece en `policies`.
+- Mandar request al proxy con `ANTHROPIC_BASE_URL=$URL` y prompt "el cliente Acme me pidió X" → `BLOCK` por la regla NL (vía Haiku judge).
+- En `/admin/events` ver la fila aparecer al refrescar (o esperar 3s del polling) con `policyHits` apuntando a `nl/customer-name-mention`.
+- Desde el CLI: `npx tranquera setup` abre browser → loguear/aprobar → `~/.tranquera/config.json` queda con `token` y `member`.
