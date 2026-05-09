@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/suggestor",
+      "schedule": "0 9 * * *"
+    }
+  ]
+}

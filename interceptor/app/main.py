@@ -31,7 +31,7 @@ from .enums import Action, PolicyLayer, winning_action
 from .models import Interaction, Policy
 from .nl_layer import is_enabled as nl_enabled
 from .nl_layer import run_nl_layer
-from .redact import redact_for_storage
+from .redact import redact_for_storage, redact_request_body
 from .schemas import MessagesRequest
 from .upstream import (
     close_client,
@@ -296,7 +296,56 @@ async def _process_messages(
             headers=response_headers,
         )
 
-    # ----- LOG (passthrough) --------------------------------------
+    # ----- REDACT -------------------------------------------------
+    # Secrets are masked inline; the mutated request reaches the upstream
+    # so the dev can keep working — the sensitive value never leaves.
+    if action == Action.REDACT:
+        redact_hits = [h for h in hits if h.action == Action.REDACT]
+        slugs = ", ".join(sorted({h.slug for h in redact_hits}))
+        reason = f"datos sensibles enmascarados por regla {slugs}"
+        logger.info(
+            "[done] trace=%s action=REDACT slugs=%s",
+            trace_id, slugs,
+        )
+        redacted_body_dict = redact_request_body(body_dict, redact_hits)
+        redacted_raw = json.dumps(redacted_body_dict).encode()
+
+        upstream_started = time.perf_counter()
+        upstream_resp = await open_upstream(
+            "POST",
+            "/v1/messages",
+            redacted_raw,
+            dict(request.headers),
+            request.url.query,
+        )
+        latency_by_layer["upstream_open_ms"] = int(
+            (time.perf_counter() - upstream_started) * 1000
+        )
+
+        await _persist_interaction(
+            session,
+            trace_id=trace_id,
+            org_id=org_id,
+            request_model=parsed.model,
+            parsed=parsed,
+            hits=hits,
+            action=action,
+            reason=reason,
+            latency_total_ms=int((time.perf_counter() - started) * 1000),
+            latency_by_layer=latency_by_layer,
+            upstream_status=upstream_resp.status_code,
+        )
+
+        upstream_headers = filtered_response_headers(upstream_resp.headers)
+        upstream_headers.update(response_headers)
+        return StreamingResponse(
+            stream_response(upstream_resp),
+            status_code=upstream_resp.status_code,
+            headers=upstream_headers,
+            media_type=upstream_resp.headers.get("content-type"),
+        )
+
+    # ----- LOG / WARN (passthrough, original body) ----------------
     upstream_started = time.perf_counter()
     upstream_resp = await open_upstream(
         "POST",
