@@ -1,0 +1,12 @@
+name,batch,hq,problem,subcategory,website
+General Analysis,W26,US,"Automated AI safety and red teaming tools — finds model failure modes, delivers reports with mitigation methods",Red teaming platform,ycombinator.com/companies/general-analysis
+Casco,W26,US,"Agentic red-teaming for web apps, APIs, cloud, and AI systems — autonomous security testing",Red teaming agentic,ycombinator.com/companies/casco
+Mount,W26,US,"Red-teams AI agents and issues ADR certifications (the SOC 2 for AI agents)",Agent certification,N/A
+Salus,W26,US,Guardrails to validate agent actions before they execute,Runtime guardrails,N/A
+Cascade,W26,US,Guardrails and testing frameworks for safe autonomous systems,Runtime guardrails,N/A
+Fenrock,W26,US,AI agents for financial crime compliance for banks and regulated fintechs,Compliance vertical,N/A
+Parachute,S25,US,"Guardrails for clinical AI — auditable proof models are safe, fair, continuously monitored",Healthcare vertical,N/A
+Bounti,S25,N/A,AI bounty hunting (security testing model),Bug bounty for AI,N/A
+Confident AI,W25,US,"LLM evaluation, benchmarking, red teaming. DeepEval OSS runs 700k evals/day",Eval platform,ycombinator.com/companies/confident-ai
+Asteroid,W25,US,Runtime supervision for AI agents with guardrails and human oversight,Runtime supervision,N/A
+Atla,S23,US,"LLM judge that evaluates agents step-by-step, suggests fixes",Eval / observability,ycombinator.com/companies/atla

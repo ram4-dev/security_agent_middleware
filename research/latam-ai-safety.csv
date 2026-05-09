@@ -1,0 +1,9 @@
+name,country,type,problem,traction,note
+GuardionAI,Brasil/US,Startup,"AI Firewall SDK + runtime guardrails for LLM agents. SOC 2 / GDPR / HIPAA / LGPD ready. P99 < 20ms",Deployed in production at LatAm fintechs,Founded by ex-Apple Siri runtime security engineers — strongest direct competitor in LATAM
+Hackmetrix,México,Startup,Security & compliance platform for SMB — SOC 2 / ISO 27001 certifications,Active across LATAM,Adjacent (general security compliance) but not AI-native
+hunterstack.io,Brasil,Startup,AI-powered compliance automation — ISO 27001 / SOC 2 up to 3x faster,Active LATAM market,Adjacent — uses AI for compliance but doesn't safe-guard AI itself
+BAISH,Argentina,Research community,"Buenos Aires AI Safety Hub — 30h free in-person course, paper presentations, workshops",Active in BA with YouTube recordings,No commercial product but talent pool
+Venten,Argentina,Newsletter / research,AI Safety for LATAM Substack — author works in technical AI safety at UBA,Launched ~6 months ago,Thought-leadership voice for the region
+AI Safety Latam (Boske),Argentina,Education,AI Safety course in BA — in-person + online,14 enrolled (March 2025),Pipeline of safety-aware engineers
+UBA AI Safety reading group,Argentina,Academic,"Reading group co-led from Oxford by Agustín Martínez (UBA PhD), funds local scholarships",Small but active,Brain drain risk — top talent moving to Oxford / Anthropic
+Anthropic Fellows / SPAR,Global,Pipeline,Programs admit LATAM researchers,Argentine alumni present,LATAM talent feeds global labs but not local startups
