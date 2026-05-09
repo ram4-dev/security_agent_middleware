@@ -45,7 +45,7 @@ export function WaveTerrain({ className = "" }: { className?: string }) {
       p.setAttribute("fill", "none");
       p.setAttribute("stroke", "currentColor");
       p.setAttribute("stroke-width", "1");
-      p.setAttribute("opacity", "0.16");
+      p.setAttribute("opacity", "0.05");
       root.appendChild(p);
       hLines.push(p);
     }
@@ -54,7 +54,7 @@ export function WaveTerrain({ className = "" }: { className?: string }) {
       p.setAttribute("fill", "none");
       p.setAttribute("stroke", "currentColor");
       p.setAttribute("stroke-width", "1");
-      p.setAttribute("opacity", "0.12");
+      p.setAttribute("opacity", "0.04");
       root.appendChild(p);
       vLines.push(p);
     }
