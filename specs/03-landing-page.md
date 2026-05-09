@@ -66,18 +66,25 @@ No es un sitio para SEO ni conversión real — es un **showroom**.
 ### Stack
 
 - Next.js 16 App Router con `'use cache'` donde aplique.
-- shadcn/ui (`Button`, `Card`).
-- Tailwind 4 con paleta del logo (definir en task T1).
+- shadcn/ui (`Button`, `Card`) — overrides aplicando design tokens de `identidad/design.md`.
+- Tailwind 4 con tokens del design system (paper / ink / graphite / graphite-dark) — ver `identidad/design.md` § 9.
+- Tipografía: IBM Plex Sans + IBM Plex Mono vía `next/font/google` con `display: 'swap'`.
 - Imágenes: SVG inline o `next/image` con preload del hero.
 
-### Copy del hero (draft inicial — afinar en task T2)
+### Copy del hero
 
-> **Headline**: "El firewall de Claude Code que tu compliance officer va a aprobar."
+> **Wordmark**: `tranquera` (IBM Plex Sans 600, lowercase)
+>
+> **Tagline institucional** (microcopy sobre el headline, en mono graphite): *// un paso controlado entre la intención y la respuesta*
+>
+> **Headline (B2B)**: "El firewall de Claude Code que tu compliance officer va a aprobar."
 >
 > **Subheadline**: "Reglas no-code, redacción en runtime, auditoría completa. Tus devs siguen usando Claude Code; vos decidís qué sale del perímetro."
 >
 > **CTA primario**: "Ver el admin demo →" (a `/admin?demo=1`)
 > **CTA secundario**: "Ver en GitHub" (a la URL del repo)
+
+> Tono y voz: ver `../identidad/design.md` § 7. **Prohibido**: "escudo", "shield", "muralla", "AI safety". **Permitido como categoría**: "firewall de Claude Code".
 
 ### Diagrama del bloque "Cómo funciona"
 
@@ -105,8 +112,8 @@ Sin data model propio — landing es estática.
 
 ## Tasks (paralelizables)
 
-- [ ] **T1** — Setup `web/` con shadcn/ui inicializado y paleta definida desde el logo. Done: `pnpm dev` muestra "hello".
-- [ ] **T2** — Hero + CTAs con copy final en español. Done: render visual aprobado por el equipo (screenshot en PR).
+- [ ] **T1** — Aplicar design system de `identidad/design.md` al proyecto `web/`: shadcn/ui inicializado con tokens en Tailwind 4 (paper/ink/graphite/graphite-dark), fonts IBM Plex Sans + Mono vía `next/font/google`, base styles en `globals.css`. Done: una page de prueba renderiza con paleta y tipografía correctas.
+- [ ] **T2** — Hero + CTAs con copy: wordmark "tranquera" en IBM Plex Sans 600, tagline institucional como microcopy mono, headline B2B y CTAs según sección Copy del hero arriba. Done: screenshot en PR con tipografía y colores correctos.
 - [ ] **T3** — Sección "El problema" con 3 cards (leak credencial / mención cliente / paste `.env`). Done: cada card tiene un mini-mockup de chat de Claude Code.
 - [ ] **T4** — Sección "Cómo funciona" con el diagrama de 4 layers + breakdown de la cascada. Done: diagrama legible en desktop y mobile.
 - [ ] **T5** — Sección "Por qué LATAM" con citas a PL 2338, S-0071, XL-SafetyBench gap. Done: links a las leyes / paper.

@@ -1,7 +1,9 @@
-# Specs — Platanus Hack 26 · Team 22
+# Specs — Tranquera (Platanus Hack 26 · Team 22)
 
-> Spec-Driven Development (SDD) para el firewall de Claude Code corporativo.
+> Spec-Driven Development (SDD) para **Tranquera** — el firewall de Claude Code corporativo.
 > Cada componente vive en su propio `.md`.
+>
+> **Identidad de marca** (paleta, tipografía, voz, wordmark): [`../identidad/design.md`](../identidad/design.md). Input obligatorio para todo lo que tenga UI o copy.
 
 ---
 
@@ -29,9 +31,9 @@ Layer 1: Claude Code (cliente)                                  │
 | 00 | Constitution (principios, stack, convenciones) | [00-constitution.md](./00-constitution.md) | — |
 | 01 | Engine / Interceptor (proxy modificable) | [01-engine-interceptor.md](./01-engine-interceptor.md) | 00, 02 |
 | 02 | VDB Bootstrap (reglas NL + embeddings) | [02-vdb-bootstrap.md](./02-vdb-bootstrap.md) | 00 |
-| 03 | Landing Page | [03-landing-page.md](./03-landing-page.md) | 00 |
-| 04 | Admin Web (visual rule builder + dashboards + approval queue) | [04-admin-web.md](./04-admin-web.md) | 00, 01, 02, 08 |
-| 06 | Pitch & Demo | [06-pitch-demo.md](./06-pitch-demo.md) | todos |
+| 03 | Landing Page | [03-landing-page.md](./03-landing-page.md) | 00, identidad |
+| 04 | Admin Web (visual rule builder + dashboards + approval queue) | [04-admin-web.md](./04-admin-web.md) | 00, 01, 02, 08, identidad |
+| 06 | Pitch & Demo | [06-pitch-demo.md](./06-pitch-demo.md) | todos, identidad |
 | 07 | Requirements & Docs técnicos | [07-requirements-docs.md](./07-requirements-docs.md) | 00, 01 |
 | 08 | AI Suggestor (Layer 4) | [08-ai-suggestor.md](./08-ai-suggestor.md) | 00, 01, 02 |
 

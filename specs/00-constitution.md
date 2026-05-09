@@ -5,6 +5,17 @@
 
 ---
 
+## Producto
+
+**Nombre**: **Tranquera** *(palabra rioplatense para la portera rural — deja pasar lo que corresponde, redacta lo sensible, cierra cuando hay que cerrar)*.
+**Tagline canónico (institucional)**: *Un paso controlado entre la intención y la respuesta.*
+**Categoría B2B (sales/landing)**: *Firewall de Claude Code corporativo.*
+**Posicionamiento**: aduana silenciosa, no escudo. No se vende como "AI safety" — se vende como **control y trazabilidad**.
+
+> Identidad visual completa (paleta, tipografía, voz, action pills, logo): ver [`../identidad/design.md`](../identidad/design.md).
+
+---
+
 ## Visión del producto
 
 Construir una **plataforma de enforcement de políticas de seguridad de datos para asistentes AI corporativos**, focalizada en **Claude Code**. Una empresa instala Claude Code en las máquinas de sus devs y configura `ANTHROPIC_BASE_URL` apuntando a nuestro interceptor. Desde ese momento:
@@ -181,7 +192,7 @@ Para el hack se acepta **single-tenant hardcoded** (`org_id = 'demo'` en env) si
 
 ## Aún por definir (decidir en kickoff)
 
-- [ ] `project-name` final → actualizar `platanus-hack-project.json`.
-- [ ] `project-oneliner-spanish` → idem.
+- [x] ~~`project-name` final~~ → **Tranquera** (ya en `platanus-hack-project.json`).
+- [x] ~~`project-oneliner-spanish`~~ → **"Un paso controlado entre la intención y la respuesta."** (ya en JSON).
 - [ ] Provider de embeddings: OpenAI vs Voyage (decidir en spec `02-vdb-bootstrap.md` cuando se mida latencia).
 - [ ] Si el proxy se deploya en Vercel Functions Node runtime o si para latencia <200ms necesitamos un tier dedicado (Fly.io, Railway).

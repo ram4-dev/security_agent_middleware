@@ -94,9 +94,17 @@ Pre-demo setup (antes del pitch):
 
 ### Frase hook (candidatas — elegir una en task T2)
 
+Categoría B2B (vende a security/compliance lead):
 - "Tus devs siguen usando Claude Code. Vos decidís qué sale."
 - "El firewall de Claude Code que tu compliance officer va a aprobar."
 - "Cada prompt corporativo, auditado. Cero fricción para el dev."
+
+Categoría institucional (tagline canónico de marca, ver `identidad/design.md`):
+- "Tranquera — Un paso controlado entre la intención y la respuesta."
+
+Recomendado: **abrir con la institucional** (slide 1, wordmark grande + tagline) y **cerrar con una B2B** (slide 6, ask). Eso ancla la marca y deja la última impresión orientada a venta.
+
+**Prohibido** en el pitch: "AI safety", "escudo", "shield", "muralla". "Firewall" sí está permitido como categoría B2B.
 
 ---
 

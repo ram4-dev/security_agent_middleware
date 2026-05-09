@@ -93,7 +93,9 @@ Todos protegidos por middleware que valida sesión Supabase mock (cookie `admin_
 
 ### Componentes UI clave
 
-- `<KpiCard>` — número grande + delta vs período anterior.
+> **Identidad**: tipografía (IBM Plex Sans + Mono), paleta base (paper / ink / graphite) y wordmark vienen de [`../identidad/design.md`](../identidad/design.md). Los **acentos de color por acción** (sección "Action colors" abajo) son **funcionales** — el design system los autoriza explícitamente para superficies de monitoreo en vivo (ver `identidad/design.md` § 6, nota de tensión funcional).
+
+- `<KpiCard>` — número grande IBM Plex Sans 600 + delta como caption mono graphite (ver `identidad/design.md` § 6).
 - `<ActionsBarChart>` — recharts, 4 barras (BLOCK / REDACT / WARN / LOG) con colores convencionales (rojo / amarillo / naranja / gris).
 - `<RuleWizard>` — stepper shadcn con 3 caminos: Preset / Filename / NL.
   - Preset: galería de cards (`AWS Access Key`, `Email`, `JWT`, `Credit Card`, `IBAN`, `CUIT/CUIL`, ...).
