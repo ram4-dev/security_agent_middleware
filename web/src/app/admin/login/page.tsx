@@ -5,13 +5,29 @@
 import { redirect } from "next/navigation";
 import { auth, isAuthConfigured, signIn } from "@/auth";
 
-export default async function LoginPage() {
+// Solo permitimos callbackUrls que sean rutas internas. Si alguien intenta
+// `?callbackUrl=https://malicio.us` lo descartamos y caemos al default.
+function safeCallbackUrl(raw: string | undefined): string {
+  if (!raw) return "/admin/events";
+  if (!raw.startsWith("/")) return "/admin/events";
+  if (raw.startsWith("//")) return "/admin/events";
+  return raw;
+}
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ callbackUrl?: string }>;
+}) {
   if (!isAuthConfigured()) {
     redirect("/");
   }
+  const { callbackUrl: raw } = await searchParams;
+  const callbackUrl = safeCallbackUrl(raw);
+
   const session = await auth();
   if (session?.user) {
-    redirect("/admin/events");
+    redirect(callbackUrl);
   }
 
   return (
@@ -47,7 +63,7 @@ export default async function LoginPage() {
           <form
             action={async () => {
               "use server";
-              await signIn("google", { redirectTo: "/admin/events" });
+              await signIn("google", { redirectTo: callbackUrl });
             }}
           >
             <button
