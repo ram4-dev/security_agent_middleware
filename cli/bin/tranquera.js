@@ -157,19 +157,39 @@ async function pollDevice(appUrl, deviceCode, intervalSec) {
   throw new Error("timeout esperando aprobación");
 }
 
+// Diferenciamos dos modos de "no validó":
+//   - { ok: false, kind: "unreachable" } → red caída, app vieja apagada, etc.
+//   - { ok: false, kind: "rejected"   } → app respondió, pero el token ya no
+//     vale (revocado, expirado, member borrado).
+// Los call-sites deciden: si "unreachable" no tocamos el config; si
+// "rejected" arrancamos device flow nuevo.
 async function fetchMe(appUrl, token) {
-  const res = await fetch(`${appUrl}/api/cli/me`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) return null;
-  return res.json();
+  let res;
+  try {
+    res = await fetch(`${appUrl}/api/cli/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch {
+    return { ok: false, kind: "unreachable" };
+  }
+  if (!res.ok) return { ok: false, kind: "rejected" };
+  const me = await res.json().catch(() => null);
+  if (!me?.member) return { ok: false, kind: "rejected" };
+  return { ok: true, me };
 }
 
+// Best-effort: si el server no responde, no es un error fatal — la sesión
+// local igual se va a limpiar.
 async function postLogout(appUrl, token) {
-  await fetch(`${appUrl}/api/cli/logout`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  try {
+    await fetch(`${appUrl}/api/cli/logout`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
 }
 
 // -------------------------------------------------------------
@@ -254,17 +274,19 @@ async function cmdSetup(args) {
 
   if (existing?.token && existing?.appUrl) {
     process.stdout.write("  · ya hay un token guardado, validando… ");
-    const me = await fetchMe(existing.appUrl, existing.token);
-    if (me?.member) {
+    const result = await fetchMe(existing.appUrl, existing.token);
+    if (result.ok) {
       console.log(c("green", "ok"));
       session = {
         token: existing.token,
-        member: me.member,
+        member: result.me.member,
         proxyUrl: existing.proxyUrl ?? DEFAULT_PROXY_URL,
         appUrl: existing.appUrl,
       };
+    } else if (result.kind === "unreachable") {
+      console.log(c("yellow", `no respondió ${existing.appUrl}, vuelvo a loguear desde cero`));
     } else {
-      console.log(c("yellow", "expirado, vuelvo a loguear"));
+      console.log(c("yellow", "expirado o revocado, vuelvo a loguear"));
     }
   }
 
@@ -342,13 +364,19 @@ async function cmdWhoami() {
   }
 
   process.stdout.write("  · validando token… ");
-  const me = await fetchMe(cfg.appUrl ?? DEFAULT_APP_URL, cfg.token);
-  if (!me?.member) {
-    console.log(c("red", "inválido"));
-    console.log(`  ${c("yellow", "→")} corré: ${c("bold", "npx tranquera login")}`);
+  const result = await fetchMe(cfg.appUrl ?? DEFAULT_APP_URL, cfg.token);
+  if (!result.ok) {
+    if (result.kind === "unreachable") {
+      console.log(c("yellow", "no respondió"));
+      console.log(`  ${c("yellow", "→")} no pude alcanzar ${cfg.appUrl ?? DEFAULT_APP_URL}. ¿VPN, proxy o app caída?`);
+    } else {
+      console.log(c("red", "inválido"));
+      console.log(`  ${c("yellow", "→")} corré: ${c("bold", "npx tranquera login")}`);
+    }
     process.exit(1);
   }
   console.log(c("green", "ok"));
+  const me = result.me;
 
   console.log("");
   console.log(`  ${c("bold", "▎ tranquera · whoami")}`);
@@ -365,10 +393,18 @@ async function cmdLogout() {
     console.log(`  ${c("dim", "no había sesión activa")}`);
     return;
   }
-  await postLogout(cfg.appUrl ?? DEFAULT_APP_URL, cfg.token);
+  // Best-effort: si el server no responde, igual limpiamos local — el config
+  // local es lo que importa para el dev. El token queda válido en server hasta
+  // que el admin lo revoque desde la UI, pero no se va a usar más desde acá.
+  const result = await postLogout(cfg.appUrl ?? DEFAULT_APP_URL, cfg.token);
   clearConfig();
   console.log("");
-  console.log(`  ${c("green", "✓")} sesión cerrada y token revocado`);
+  if (result.ok) {
+    console.log(`  ${c("green", "✓")} sesión cerrada y token revocado en el server`);
+  } else {
+    console.log(`  ${c("yellow", "⚠")} sesión local cerrada, pero no pude avisar al server`);
+    console.log(`  ${c("dim", "  el token sigue activo en backend — pedile a tu admin que lo revoque si te preocupa")}`);
+  }
   console.log(`  ${c("dim", "el rc no se modifica — si querés sacar el proxy, borralo a mano")}`);
   console.log("");
 }
