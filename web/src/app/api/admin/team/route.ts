@@ -2,7 +2,7 @@
 // Solo admins pueden modificar (los dev no tienen acceso al back-office por
 // ahora, pero gateamos igual por defensa).
 import type { NextRequest } from "next/server";
-import { getAdminSession } from "@/lib/admin-session";
+import { getAdminSession, requireAdminRole } from "@/lib/admin-session";
 import { prisma } from "@/lib/prisma";
 import { isValidEmail, toMemberDTO } from "@/lib/team";
 
@@ -23,8 +23,9 @@ type CreateBody = {
 };
 
 export async function POST(request: NextRequest) {
-  const session = await getAdminSession();
-  if (!session) return Response.json({ error: "unauthorized" }, { status: 401 });
+  const auth = await requireAdminRole();
+  if (!auth.ok) return auth.response;
+  const session = auth.session;
 
   const body = (await request.json().catch(() => null)) as CreateBody | null;
   const email = (body?.email ?? "").trim().toLowerCase();

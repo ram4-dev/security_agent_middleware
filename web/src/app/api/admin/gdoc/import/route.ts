@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
-import { getAdminSession } from '@/lib/admin-session'
+import { requireAdminRole } from '@/lib/admin-session'
 
 const MAX_DOC_CHARS = 30_000
 
@@ -66,10 +66,9 @@ function parseHaikuJson(raw: string): z.infer<typeof HaikuResponseSchema> {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getAdminSession()
-  if (!session) {
-    return Response.json({ error: 'unauthorized' }, { status: 401 })
-  }
+  const auth = await requireAdminRole()
+  if (!auth.ok) return auth.response
+  const session = auth.session
 
   let docUrl: string
   try {

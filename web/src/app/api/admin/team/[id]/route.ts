@@ -1,15 +1,16 @@
 // DELETE /api/admin/team/[id] — remover member de la org actual.
 // No se puede eliminar al último admin (te dejarías sin acceso).
 import type { NextRequest } from "next/server";
-import { getAdminSession } from "@/lib/admin-session";
+import { requireAdminRole } from "@/lib/admin-session";
 import { prisma } from "@/lib/prisma";
 
 export async function DELETE(
   _request: NextRequest,
   ctx: RouteContext<"/api/admin/team/[id]">,
 ) {
-  const session = await getAdminSession();
-  if (!session) return Response.json({ error: "unauthorized" }, { status: 401 });
+  const auth = await requireAdminRole();
+  if (!auth.ok) return auth.response;
+  const session = auth.session;
 
   const { id } = await ctx.params;
 

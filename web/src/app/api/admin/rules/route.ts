@@ -2,7 +2,7 @@
 // El proxy lee `policies` en cada request, así que toda mutación acá se
 // refleja en el próximo prompt sin caché ni fanout.
 import type { NextRequest } from "next/server";
-import { getAdminSession } from "@/lib/admin-session";
+import { getAdminSession, requireAdminRole } from "@/lib/admin-session";
 import {
   ADMIN_ACTIONS,
   POLICY_DOMAINS,
@@ -37,10 +37,9 @@ type CreateBody = {
 };
 
 export async function POST(request: NextRequest) {
-  const session = await getAdminSession();
-  if (!session) {
-    return Response.json({ error: "unauthorized" }, { status: 401 });
-  }
+  const auth = await requireAdminRole();
+  if (!auth.ok) return auth.response;
+  const session = auth.session;
   const body = (await request.json().catch(() => null)) as CreateBody | null;
   if (!body) {
     return Response.json({ error: "invalid json" }, { status: 400 });

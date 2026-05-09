@@ -1,4 +1,4 @@
-import { getAdminSession } from "@/lib/admin-session";
+import { requireAdminRole } from "@/lib/admin-session";
 import { prisma } from "@/lib/prisma";
 import { NextRequest } from "next/server";
 
@@ -6,8 +6,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getAdminSession();
-  if (!session) return Response.json({ error: "unauthorized" }, { status: 401 });
+  const auth = await requireAdminRole();
+  if (!auth.ok) return auth.response;
+  const session = auth.session;
 
   const { id } = await params;
   const { action, rejectReason } = await request.json();

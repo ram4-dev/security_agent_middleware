@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { getAdminSession } from "@/lib/admin-session";
+import { requireAdminRole } from "@/lib/admin-session";
 import {
   ADMIN_ACTIONS,
   POLICY_DOMAINS,
@@ -23,10 +23,9 @@ export async function PATCH(
   request: NextRequest,
   ctx: RouteContext<"/api/admin/rules/[id]">,
 ) {
-  const session = await getAdminSession();
-  if (!session) {
-    return Response.json({ error: "unauthorized" }, { status: 401 });
-  }
+  const auth = await requireAdminRole();
+  if (!auth.ok) return auth.response;
+  const session = auth.session;
   const { id } = await ctx.params;
   const body = (await request.json().catch(() => null)) as PatchBody | null;
   if (!body) {
@@ -78,10 +77,9 @@ export async function DELETE(
   _request: NextRequest,
   ctx: RouteContext<"/api/admin/rules/[id]">,
 ) {
-  const session = await getAdminSession();
-  if (!session) {
-    return Response.json({ error: "unauthorized" }, { status: 401 });
-  }
+  const auth = await requireAdminRole();
+  if (!auth.ok) return auth.response;
+  const session = auth.session;
   const { id } = await ctx.params;
   try {
     await prisma.policy.delete({ where: { id, orgId: session.orgId } });

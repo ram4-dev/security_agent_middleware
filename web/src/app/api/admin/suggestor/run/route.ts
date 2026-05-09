@@ -3,14 +3,13 @@
 // Body: { lookbackDays?: number, dryRun?: boolean }
 
 import type { NextRequest } from "next/server";
-import { getAdminSession } from "@/lib/admin-session";
+import { requireAdminRole } from "@/lib/admin-session";
 import { runSuggestor } from "@/lib/suggestor";
 
 export async function POST(request: NextRequest) {
-  const session = await getAdminSession();
-  if (!session) {
-    return Response.json({ error: "unauthorized" }, { status: 401 });
-  }
+  const auth = await requireAdminRole();
+  if (!auth.ok) return auth.response;
+  const session = auth.session;
 
   let lookbackDays: number | undefined;
   let dryRun: boolean | undefined;

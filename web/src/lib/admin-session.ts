@@ -21,6 +21,8 @@ export const DEMO_ORG_ID = "demo";
 export type AdminSession = {
   orgId: string;
   email: string;
+  /** "admin" → puede editar policies/team/etc. "dev" → solo lectura. */
+  role: "admin" | "dev";
   name?: string | null;
   image?: string | null;
 };
@@ -28,6 +30,7 @@ export type AdminSession = {
 const DEMO_SESSION: AdminSession = {
   orgId: DEMO_ORG_ID,
   email: "admin@team22.dev",
+  role: "admin",
 };
 
 export async function getAdminSession(): Promise<AdminSession | null> {
@@ -44,6 +47,7 @@ export async function getAdminSession(): Promise<AdminSession | null> {
     return {
       orgId: session.user.orgId,
       email: session.user.email,
+      role: session.user.role ?? "admin",
       name: session.user.name,
       image: session.user.image,
     };
@@ -53,6 +57,30 @@ export async function getAdminSession(): Promise<AdminSession | null> {
   const value = jar.get(ADMIN_COOKIE)?.value;
   if (value !== "demo") return null;
   return DEMO_SESSION;
+}
+
+/**
+ * Igual que getAdminSession pero rechaza devs. Usar en endpoints mutating
+ * (`/api/admin/team`, `/api/admin/rules`, etc.). Devuelve la session si es
+ * admin, o un Response 403 que el caller debe `return`-ear.
+ */
+export async function requireAdminRole(): Promise<
+  { ok: true; session: AdminSession } | { ok: false; response: Response }
+> {
+  const session = await getAdminSession();
+  if (!session) {
+    return { ok: false, response: Response.json({ error: "unauthorized" }, { status: 401 }) };
+  }
+  if (session.role !== "admin") {
+    return {
+      ok: false,
+      response: Response.json(
+        { error: "forbidden: solo los admins pueden hacer esto" },
+        { status: 403 },
+      ),
+    };
+  }
+  return { ok: true, session };
 }
 
 /**
@@ -85,6 +113,7 @@ export async function ensureAdminSession(): Promise<AdminSession | null> {
   return {
     orgId: resolved.orgId,
     email: session.user.email,
+    role: resolved.role,
     name: session.user.name,
     image: session.user.image,
   };
