@@ -161,6 +161,8 @@ El producto es **multi-tenant por diseño**: cada empresa cliente es una `organi
 
 Para el hack se acepta **single-tenant hardcoded** (`org_id = 'demo'` en env) siempre y cuando el schema de DB ya tenga la columna `org_id` y los queries la filtren — la migración a multi-tenant real debe ser solo configuración, no rewrite.
 
+> **TODO post-hack (multi-tenant real)**: habilitar **Row Level Security** en `policies`, `interactions` y `rule_suggestions` con policy `org_id = current_setting('request.jwt.claims', true)::jsonb->>'org_id'`. Sin esto, cuando activemos Supabase Realtime en `/admin/events`, el channel filtra por tabla pero no por org → leak entre tenants. Ver finding I8 del audit del 2026-05-09.
+
 ---
 
 ## Out of scope global (no construimos esto en 48h)

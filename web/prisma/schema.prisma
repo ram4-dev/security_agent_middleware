@@ -8,9 +8,9 @@ generator client {
   previewFeatures = ["postgresqlExtensions"]
 }
 
+// La datasource URL vive en `prisma.config.ts` (cambio breaking de Prisma 7).
 datasource db {
   provider   = "postgresql"
-  url        = env("DATABASE_URL")
   extensions = [vector]
 }
 
@@ -43,6 +43,16 @@ enum Severity {
   high
 }
 
+/// Categorías canónicas de policies. Sincronizado con `seeds/`.
+/// Si se agrega un valor nuevo, requiere migración.
+enum PolicyDomain {
+  credentials
+  pii
+  internal_paths
+  business_policy
+  code
+}
+
 // =============================================================
 // Models
 // =============================================================
@@ -52,7 +62,7 @@ enum Severity {
 model Organization {
   id                String   @id // ej. 'demo', 'acme'
   name              String
-  upstreamApiKeyRef String?  @map("upstream_api_key_ref") // referencia a vault, NO la key cruda
+  upstreamApiKeyRef String?  @map("upstream_api_key_ref") // formato "env:<VAR>" o "vault:<uuid>" — nunca la key cruda
   createdAt         DateTime @default(now()) @map("created_at")
 
   policies     Policy[]
@@ -70,7 +80,7 @@ model Policy {
   id            String                       @id @default(uuid()) @db.Uuid
   orgId         String                       @default("demo") @map("org_id")
   slug          String
-  domain        String // 'business' | 'code' | otros — funciona como category
+  domain        PolicyDomain // categoría canónica — ver enum PolicyDomain
   layer         PolicyLayer
   rule          String // texto NL (si layer='nl') o descripción humana de la regla
   pattern       String? // regex literal si layer='regex'
@@ -111,7 +121,7 @@ model Interaction {
 
   organization Organization @relation(fields: [orgId], references: [id])
 
-  @@index([orgId, createdAt(sort: Desc)])
-  @@index([action])
+  // Composite que cubre el dashboard (`/api/admin/metrics` y `/admin/events?action=...`).
+  @@index([orgId, action, createdAt(sort: Desc)])
   @@map("interactions")
 }

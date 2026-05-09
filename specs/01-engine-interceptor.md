@@ -205,7 +205,7 @@ Tabla `policies` y función `match_policies` viven en spec `02-vdb-bootstrap.md`
 - [ ] **T4** — Layer 3 Haiku judge: cliente Anthropic SDK con prompt caching del system prompt, recibe top-K de `match_policies` (raw query Prisma) y decide JSON `{action, policyId, reason}`. Done: prompt "decime el nombre del cliente Acme" con regla NL "no menciones nombres de clientes" → `REDACT`.
 - [ ] **T5** — Mutator de body para REDACT: reemplaza match por `[REDACTED:<tipo>]` en `messages[].content` (texto). Done: snapshot test con un body antes/después.
 - [ ] **T6** — Synthesizer del `Message` para BLOCK: shape exacto de Anthropic con `stop_reason: "team22_blocked"`. Done: smoke test con `claude` CLI muestra el mensaje en pantalla.
-- [ ] **T7** — Persistencia en `interactions` con redacción de PII previa. Done: query `select * from interactions limit 5` muestra prompts sin secrets visibles.
+- [ ] **T7** — Persistencia en `interactions` con redacción de PII previa. **Importante**: el redactor corre sobre `prompt` **y** sobre `reason` antes del insert (Haiku puede haber citado el secret en su explicación — leak risk). El system prompt del Haiku judge prohibe explícitamente citar el contenido del prompt: `reason` debe usar template fijo "matchea regla <slug>: <label>" sin reproducir texto del user. Done: query `select * from interactions limit 5` muestra prompts y reasons sin secrets visibles.
 - [ ] **T8** — Smoke tests (vitest) de los 3 escenarios demo (leak credencial, nombre cliente, benigno). Done: `pnpm test` pasa los 3.
 - [ ] **T9** — Métricas de latencia por capa al log + headers diagnósticos `x-team22-trace-id` y `x-team22-action`. Done: curl ve los headers en cada response.
 

@@ -14,7 +14,7 @@ Además, la **Layer 4 (AI Suggestor)** necesita embeddings de los prompts redact
 
 Hoy partimos de cero. Necesitamos:
 
-1. La extensión `pgvector` habilitada y la tabla `policies` (con `embedding vector(1536)`) creada vía la migración Prisma `web/prisma/migrations/...init/migration.sql` (que ya existe e incluye `CREATE EXTENSION`, ivfflat parcial y la función `match_policies`).
+1. La extensión `pgvector` habilitada y la tabla `policies` (con `embedding vector(1536)`) creada vía la migración Prisma `web/prisma/migrations/...init/migration.sql` (que ya existe e incluye `CREATE EXTENSION` y la función `match_policies`).
 2. Un script idempotente `pnpm seed:vdb` que lea un corpus seed desde `seeds/` y haga upsert por `(org_id, slug)`.
 3. Que el corpus tenga reglas NL **y** reglas regex/pattern (las regex/pattern no necesitan embedding, pero igual viven en `policies` con `layer='regex'|'pattern'`).
 
@@ -26,7 +26,7 @@ Hoy partimos de cero. Necesitamos:
 - Script `pnpm seed:vdb` que carga ≥ 20 reglas NL + ≥ 10 regex/pattern.
 - Re-correr el script no duplica reglas (idempotente por `(org_id, slug)`).
 - Función `match_policies(query_embedding, k, p_org_id)` en Postgres devuelve top-k filtradas por org con cosine distance — ya creada en la migración inicial.
-- Corpus seed cubre ≥ 4 dominios: `credentials`, `pii`, `internal-paths`, `business-policy`.
+- Corpus seed cubre ≥ 4 dominios: `credentials`, `pii`, `internal_paths`, `business_policy`.
 - Provider de embeddings configurable vía env (`EMBEDDING_PROVIDER=openai|voyage`).
 
 ## Non-Goals
@@ -65,7 +65,7 @@ Hoy partimos de cero. Necesitamos:
 ```markdown
 ---
 slug: customer-name-mention
-domain: business-policy
+domain: business_policy
 severity: medium
 default_action: REDACT
 ---
@@ -146,12 +146,12 @@ pnpm seed:vdb --dry-run             # imprime acciones sin escribir
 Vive en `web/prisma/schema.prisma` (modelo `Policy` → tabla `policies`). La migración SQL `web/prisma/migrations/20260509000000_init/migration.sql` ya incluye:
 
 - `CREATE EXTENSION IF NOT EXISTS vector;`
-- Tabla `policies` con todos los campos.
-- Índice `policies_embedding_idx` ivfflat parcial sobre `embedding` para `layer='nl' AND is_active=true`.
-- Función `match_policies(query_embedding, k, p_org_id)`.
+- Tabla `policies` con todos los campos + CHECK constraints.
+- **Sin** índice ANN sobre `embedding` por ahora — con <500 NL policies por org, el seq scan dentro del filtro parcial (`WHERE layer='nl' AND is_active AND org_id`) es más rápido y predecible que un ivfflat mal-sized o un HNSW que en N pequeño sufre overhead. Cuando una org supere ~5k NL policies se agrega `CREATE INDEX ... USING hnsw`.
+- Función `match_policies(query_embedding, k, p_org_id)` que devuelve enums tipados (no `text`) — el cliente Prisma `$queryRaw` recibe `default_action` y `severity` ya parseados al tipo correcto.
 - Seed de `organizations` con `('demo', 'Org Demo')`.
 
-> Si en algún momento se modifica `schema.prisma`, regenerar la próxima migración con `pnpm prisma migrate dev --create-only --name <nombre>` y **volver a sumar** el bloque manual (ivfflat + función) al final del SQL generado. Prisma no expresa esos pedazos declarativamente.
+> Si en algún momento se modifica `schema.prisma`, regenerar la próxima migración con `pnpm prisma migrate dev --create-only --name <nombre>` y **volver a sumar** el bloque manual (función `match_policies` + CHECK constraints + futuros índices ANN) al final del SQL generado. Prisma no expresa esos pedazos declarativamente.
 
 ### Cómo el proxy consume las policies
 
@@ -162,13 +162,15 @@ const fastRules = await prisma.policy.findMany({
 });
 
 // Layer 3 (Haiku judge): top-K via match_policies — raw porque Prisma no maneja vector.
+import type { Action, PolicyDomain, Severity } from '@prisma/client';
+
 const nlMatches = await prisma.$queryRaw<Array<{
   policy_id: string;
   slug: string;
-  domain: string;
+  domain: PolicyDomain;
   rule: string;
-  default_action: 'BLOCK' | 'REDACT' | 'WARN' | 'LOG';
-  severity: 'low' | 'medium' | 'high';
+  default_action: Action;
+  severity: Severity;
   score: number;
 }>>`SELECT * FROM match_policies(${queryEmbedding}::vector, ${k}, ${orgId})`;
 ```
@@ -184,7 +186,7 @@ const nlMatches = await prisma.$queryRaw<Array<{
 ## Tasks (paralelizables)
 
 - [ ] **T1** — Verificar que la migración `web/prisma/migrations/20260509000000_init/migration.sql` aplica limpio en Docker local. Done: `pnpm prisma migrate dev` termina sin error y `\dx` en psql muestra `vector`.
-- [ ] **T2** — Corpus seed NL: 20+ archivos `.md` en `seeds/policies-nl/` cubriendo `credentials`, `pii`, `internal-paths`, `business-policy`. Done: `ls seeds/policies-nl/*.md | wc -l` ≥ 20.
+- [ ] **T2** — Corpus seed NL: 20+ archivos `.md` en `seeds/policies-nl/` cubriendo `credentials`, `pii`, `internal_paths`, `business_policy`. Done: `ls seeds/policies-nl/*.md | wc -l` ≥ 20.
 - [ ] **T3** — Corpus seed regex/pattern: archivos `seeds/policies-regex.json` y `seeds/policies-pattern.json` con ≥ 10 reglas combinadas. Done: archivos versionados, JSON válido.
 - [ ] **T4** — Script `web/scripts/seed-vdb.ts` que lee los 3 corpus, llama al provider de embeddings (solo NL) y hace `prisma.policy.upsert` por `(org_id, slug)`. Done: corre localmente y popla la tabla.
 - [ ] **T5** — Wrapper `--dry-run`, `--only=<domain>` y `--org=<org_id>`. Done: `pnpm seed:vdb --dry-run` imprime acciones sin escribir.
