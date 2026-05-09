@@ -27,7 +27,7 @@ El **interceptor** es un proxy HTTPS que se mete entre Claude Code y Anthropic: 
 - Endpoint `POST /v1/messages` (compatible con Anthropic Messages API, no streaming v1).
 - Cascada Regex → Pattern → Haiku judge con **<200 ms de overhead** sobre el round-trip a Anthropic.
 - 4 acciones soportadas: `BLOCK | REDACT | WARN | LOG`.
-- Cada request escribe una fila en `intercept_events` con `traceId`, `org_id`, prompt redactado, regla(s) que matchearon, acción tomada y latencia por capa.
+- Cada request escribe una fila en `interactions` con `traceId`, `org_id`, prompt redactado, regla(s) que matchearon, acción tomada y latencia por capa.
 - Soporta al menos 3 escenarios de demo en vivo: leak de credencial (BLOCK), nombre de cliente (REDACT), prompt benigno (LOG).
 - Configurable por `org_id` — las reglas se cargan en memoria al boot y se invalidan cuando el admin las edita (revalidate vía Supabase Realtime o polling de 5s).
 
@@ -56,7 +56,7 @@ El **interceptor** es un proxy HTTPS que se mete entre Claude Code y Anthropic: 
 - [ ] Cuando una regla `BLOCK` matchea, la respuesta tiene `stop_reason: "team22_blocked"` (custom) y un único content block `text` con el motivo en español rioplatense.
 - [ ] Cuando una regla `REDACT` matchea, el prompt enviado a Anthropic tiene los matches reemplazados por `[REDACTED:tipo]` y la respuesta upstream se devuelve al caller sin cambios.
 - [ ] Cuando ninguna regla matchea (LOG default), el request se forwardea 1:1 a `api.anthropic.com` y la respuesta se devuelve también 1:1.
-- [ ] Cada request escribe en `intercept_events` con: `trace_id`, `org_id`, `prompt_redacted`, `action`, `rule_hits[]`, `latency_total_ms`, `latency_by_layer{regex,pattern,haiku,upstream}`.
+- [ ] Cada request escribe en `interactions` con: `trace_id`, `org_id`, `prompt_redacted`, `action`, `policy_hits[]`, `latency_total_ms`, `latency_by_layer{regex,pattern,haiku,upstream}`.
 - [ ] Si Haiku falla (timeout, error API), la cascada **fail-closed** → acción default = `WARN` con `reason: "haiku_unavailable"` y se forwardea a Anthropic igual (no romper el flow del dev por nuestra culpa, pero notificar al admin).
 - [ ] Latencia: en el caso "no matchea nada en regex/pattern y no se invoca Haiku" el overhead < 30 ms p50; cuando se invoca Haiku < 200 ms p50.
 
@@ -160,50 +160,52 @@ incoming POST /v1/messages
   │     - WARN    → fetch upstream → return + emit notification
   │     - LOG     → fetch upstream → return
   │
-  ├─► persist(intercept_events)
+  ├─► persist(interactions)
   └─► response
 ```
 
-## Data model (Supabase)
+## Data model
 
-```sql
-create table intercept_events (
-  id uuid primary key default gen_random_uuid(),
-  trace_id text not null unique,
-  org_id text not null,
-  request_model text not null,
-  prompt_redacted text not null,                -- ya pasó por el redactor de PII
-  action text not null check (action in ('BLOCK','REDACT','WARN','LOG')),
-  reason text not null,                         -- español, user-facing
-  rule_hits jsonb not null default '[]',
-  latency_total_ms int not null,
-  latency_by_layer jsonb not null default '{}', -- {regex:5,pattern:18,haiku:142,upstream:840}
-  upstream_status int,                          -- null si BLOCK
-  created_at timestamptz default now()
-);
-create index intercept_events_org_idx on intercept_events(org_id, created_at desc);
-create index intercept_events_action_idx on intercept_events(action);
+Schema canónico vive en `web/prisma/schema.prisma` y la migración `web/prisma/migrations/.../migration.sql`. El proxy escribe en la tabla `interactions` (modelo `Interaction`):
+
+```prisma
+model Interaction {
+  id              String   @id @default(uuid()) @db.Uuid
+  traceId         String   @unique @map("trace_id")
+  orgId           String   @default("demo") @map("org_id")
+  userId          String?  @map("user_id") @db.Uuid          // Supabase Auth user, null si proxy directo
+  requestModel    String   @map("request_model")
+  prompt          String                                       // SIEMPRE redactado antes de persistir
+  action          Action                                       // BLOCK | REDACT | WARN | LOG
+  reason          String
+  policyHits      Json     @default("[]") @map("policy_hits")  // [{layer, policyId, slug, score?}]
+  latencyTotalMs  Int      @map("latency_total_ms")
+  latencyByLayer  Json     @default("{}") @map("latency_by_layer")
+  upstreamStatus  Int?     @map("upstream_status")             // null si BLOCK
+  embedding       Unsupported("vector(1536)")?                 // poblado por el proxy o backfill del Suggestor
+  createdAt       DateTime @default(now()) @map("created_at")
+}
 ```
 
-Tabla `rules` y función `match_rules` viven en spec `02-vdb-bootstrap.md`.
+Tabla `policies` y función `match_policies` viven en spec `02-vdb-bootstrap.md`.
 
 ---
 
 ## Dependencias
 
 - **Spec `00-constitution.md`** — stack y convenciones.
-- **Spec `02-vdb-bootstrap.md`** — necesita la tabla `rules` y la función `match_rules` (usadas por el Haiku judge de Layer 3).
+- **Spec `02-vdb-bootstrap.md`** — necesita la tabla `policies` y la función `match_policies` (usadas por el Haiku judge de Layer 3).
 - **Spec `04-admin-web.md`** — define el shape de las reglas que el admin guarda y el proxy consume.
 
 ## Tasks (paralelizables)
 
 - [ ] **T1** — Skeleton Next.js Route Handler `app/api/v1/messages/route.ts` que recibe el body Anthropic, valida shape básico y forwardea 1:1 a `api.anthropic.com`. Done: `ANTHROPIC_BASE_URL=http://localhost:3000/api` con `claude` CLI completa una conversación normal.
-- [ ] **T2** — Layer 1 Regex: cargar `regex_rules` de la org en memoria al boot, evaluar cada texto del prompt, devolver `RuleHit[]`. Done: regla seed `aws-access-key` matchea `AKIA[A-Z0-9]{16}` y devuelve `{action:"BLOCK"}`.
+- [ ] **T2** — Layer 1 Regex: cargar `policies where layer='regex'` de la org en memoria al boot vía Prisma, evaluar cada texto del prompt, devolver `PolicyHit[]`. Done: regla seed `aws-access-key` matchea `AKIA[A-Z0-9]{16}` y devuelve `{action:"BLOCK"}`.
 - [ ] **T3** — Layer 2 Pattern: matcher para nombres de archivo (`.env`, `id_rsa`, `*.pem`) y paths (`~/.ssh`, `~/.aws`). Done: regla seed `dotenv-paste` matchea bloque que empieza con `DATABASE_URL=` o `AWS_ACCESS_KEY_ID=`.
-- [ ] **T4** — Layer 3 Haiku judge: cliente Anthropic SDK con prompt caching del system prompt, recibe top-K de `match_rules` y decide JSON `{action, ruleId, reason}`. Done: prompt "decime el nombre del cliente Acme" con regla NL "no menciones nombres de clientes" → `REDACT`.
+- [ ] **T4** — Layer 3 Haiku judge: cliente Anthropic SDK con prompt caching del system prompt, recibe top-K de `match_policies` (raw query Prisma) y decide JSON `{action, policyId, reason}`. Done: prompt "decime el nombre del cliente Acme" con regla NL "no menciones nombres de clientes" → `REDACT`.
 - [ ] **T5** — Mutator de body para REDACT: reemplaza match por `[REDACTED:<tipo>]` en `messages[].content` (texto). Done: snapshot test con un body antes/después.
 - [ ] **T6** — Synthesizer del `Message` para BLOCK: shape exacto de Anthropic con `stop_reason: "team22_blocked"`. Done: smoke test con `claude` CLI muestra el mensaje en pantalla.
-- [ ] **T7** — Persistencia en `intercept_events` con redacción de PII previa. Done: query `select * from intercept_events limit 5` muestra prompts sin secrets visibles.
+- [ ] **T7** — Persistencia en `interactions` con redacción de PII previa. Done: query `select * from interactions limit 5` muestra prompts sin secrets visibles.
 - [ ] **T8** — Smoke tests (vitest) de los 3 escenarios demo (leak credencial, nombre cliente, benigno). Done: `pnpm test` pasa los 3.
 - [ ] **T9** — Métricas de latencia por capa al log + headers diagnósticos `x-team22-trace-id` y `x-team22-action`. Done: curl ve los headers en cada response.
 
@@ -213,5 +215,5 @@ Tabla `rules` y función `match_rules` viven en spec `02-vdb-bootstrap.md`.
 - **Smoke benigno**: `ANTHROPIC_BASE_URL=$URL claude "explicame el patrón Observer"` → respuesta normal de Claude.
 - **REDACT**: prompt "el cliente Acme me pidió X" con regla NL activa → respuesta upstream coherente con `[REDACTED:client]`.
 - **Latencia**: con regla regex matcheando, p50 < 30ms entre que llega el request y se envía la respuesta BLOCK. Con Haiku invocado, p50 < 200ms de overhead vs sin proxy.
-- **Audit**: tomar un `traceId` de `x-team22-trace-id`, query `select * from intercept_events where trace_id = $1` y reconstruir mentalmente la decisión.
+- **Audit**: tomar un `traceId` de `x-team22-trace-id`, query `select * from interactions where trace_id = $1` y reconstruir mentalmente la decisión.
 - **Fail-closed**: con `ANTHROPIC_API_KEY` rota a propósito, request termina en `WARN` y se forwardea (el dev ve un 401 de Anthropic, no un 5xx nuestro).

@@ -54,45 +54,60 @@ Este spec consolida: prerequisites, env vars, scripts, runbook, troubleshooting,
 
 ## Interfaces / Contratos
 
-### Variables de entorno (target `.env.example`)
+### Variables de entorno (target `web/.env.example`)
 
 ```bash
+# --- Database ---
+# Local: docker-compose en root del repo (`docker compose up`)
+# Prod : Supabase Postgres (Settings → Database → Connection string)
+DATABASE_URL=postgresql://team22:team22@localhost:5432/team22
+
 # --- Anthropic ---
 ANTHROPIC_API_KEY=sk-ant-...                # key del cliente; el proxy la usa para forward
-ANTHROPIC_UPSTREAM_URL=https://api.anthropic.com   # endpoint real al que reenvía el proxy
+ANTHROPIC_UPSTREAM_URL=https://api.anthropic.com
 
-# --- Embeddings (para reglas NL + AI Suggestor) ---
+# --- Embeddings (reglas NL + AI Suggestor) ---
 EMBEDDING_PROVIDER=openai                   # openai | voyage
 OPENAI_API_KEY=sk-...
 VOYAGE_API_KEY=                             # solo si EMBEDDING_PROVIDER=voyage
 
-# --- Supabase ---
-SUPABASE_URL=https://xxxx.supabase.co
-SUPABASE_ANON_KEY=...
-SUPABASE_SERVICE_ROLE_KEY=...               # server-side (seed, admin, proxy)
+# --- Supabase Auth (solo /admin) ---
+# Local: dejar vacíos y usar el bypass de demo (cookie mock).
+# Prod : crear proyecto Supabase y pegar las keys de Project Settings → API.
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=                  # server-side only
 
 # --- App ---
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 DEMO_ORG_ID=demo                            # single-tenant hardcoded para hack
 
-# --- AI Suggestor (spec 08) ---
-SUGGESTOR_MIN_EVENTS=200                    # mínimo de events para correr el job
+# --- AI Suggestor (spec 08, post-hack) ---
+SUGGESTOR_MIN_EVENTS=200
 SUGGESTOR_LOOKBACK_DAYS=3
 ```
 
-### Scripts pnpm
+### Scripts pnpm (en `web/package.json`)
 
 ```jsonc
 {
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "seed:vdb": "tsx scripts/seed-vdb.ts",
-    "suggestor:run": "tsx scripts/run-suggestor.ts",
-    "test": "vitest run",
-    "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "dev":            "next dev",
+    "build":          "next build",
+    "start":          "next start",
+    "lint":           "next lint",
+    "typecheck":      "tsc --noEmit",
+
+    "db:up":          "docker compose -f ../docker-compose.yml up -d",
+    "db:down":        "docker compose -f ../docker-compose.yml down",
+    "db:migrate":     "prisma migrate dev",
+    "db:reset":       "prisma migrate reset",
+    "db:studio":      "prisma studio",
+
+    "seed:vdb":       "tsx scripts/seed-vdb.ts",
+    "suggestor:run":  "tsx scripts/run-suggestor.ts",
+
+    "test":           "vitest run"
   }
 }
 ```

@@ -10,9 +10,9 @@ El Layer 4 es el que **convierte la plataforma de reactiva a proactiva**. La pre
 
 El Suggestor:
 
-1. Toma los `intercept_events` de la org de los últimos `SUGGESTOR_LOOKBACK_DAYS` (default 3).
+1. Toma los `interactions` de la org de los últimos `SUGGESTOR_LOOKBACK_DAYS` (default 3).
 2. Filtra los que pasaron como `LOG` (no fueron bloqueados/redactados — la matriz de "lo que estuvo pasando bajo el radar").
-3. Embebe los prompts redactados (la columna `intercept_events.embedding`) y los **clusteriza** (HDBSCAN o kmeans simple si HDBSCAN es overkill para 48h).
+3. Embebe los prompts redactados (la columna `interactions.embedding`) y los **clusteriza** (HDBSCAN o kmeans simple si HDBSCAN es overkill para 48h).
 4. Para cada cluster representativo (≥ N members), pide a Haiku que proponga:
    - Un `slug` y `label` para la regla.
    - Un `default_action` sugerido (`REDACT` por default si Haiku detecta info sensible, `WARN` si es ambiguo).
@@ -51,7 +51,7 @@ El admin decide. El Suggestor **nunca activa reglas por sí solo**.
 
 ## Acceptance Criteria
 
-- [ ] `pnpm suggestor:run --org=demo` lee `intercept_events` de los últimos `SUGGESTOR_LOOKBACK_DAYS` filtrando `action='LOG'`.
+- [ ] `pnpm suggestor:run --org=demo` lee `interactions` de los últimos `SUGGESTOR_LOOKBACK_DAYS` filtrando `action='LOG'`.
 - [ ] Si los events tienen `embedding=null`, el job los embebe primero (back-fill).
 - [ ] Clustering produce N clusters con ≥ `SUGGESTOR_MIN_CLUSTER_SIZE` members (default 5).
 - [ ] Para cada cluster, Haiku devuelve un JSON `{slug, label, default_action, reasoning, suggested_pattern?}`.
@@ -140,7 +140,7 @@ Output schema (JSON estricto):
 ## Dependencias
 
 - **Spec `00-constitution.md`** — stack y env vars.
-- **Spec `01-engine-interceptor.md`** — la tabla `intercept_events` debe estar poblada.
+- **Spec `01-engine-interceptor.md`** — la tabla `interactions` debe estar poblada.
 - **Spec `02-vdb-bootstrap.md`** — la columna `embedding` y el provider configurado.
 - **Spec `04-admin-web.md`** — la approval queue lee de `rule_suggestions`.
 
@@ -148,7 +148,7 @@ Output schema (JSON estricto):
 
 - [ ] **T1** — Migración SQL `supabase/migrations/0003_rule_suggestions.sql`. Done: aplica sin error.
 - [ ] **T2** — `scripts/run-suggestor.ts` con CLI args (`--org`, `--lookback-days`, `--dry-run`). Done: imprime el plan en `--dry-run`.
-- [ ] **T3** — Backfill de embeddings de `intercept_events` con embedding null. Done: `select count(*) from intercept_events where embedding is null` baja a 0 después de correr.
+- [ ] **T3** — Backfill de embeddings de `interactions` con embedding null. Done: `select count(*) from interactions where embedding is null` baja a 0 después de correr.
 - [ ] **T4** — Implementación del clustering: empezar con `density-clustering` (HDBSCAN-like en TS) o, si no bancan la deps, kmeans con K determinado por elbow simple. Done: clusters generados con >= 5 members.
 - [ ] **T5** — Cliente Haiku con prompt caching del system block. Output parseado contra schema con Zod. Done: dado un cluster mock devuelve un Suggestion válido.
 - [ ] **T6** — Upsert en `rule_suggestions` con dedup por `cluster_signature`. Done: re-correr el job no genera duplicados.
@@ -156,7 +156,7 @@ Output schema (JSON estricto):
 
 ## Verification
 
-- **Local**: cargar 50 events en `intercept_events` con `action='LOG'` (mitad de ellos mencionando "cliente XYZ" y la otra mitad benignos) → `pnpm suggestor:run --org=demo` → en `/admin/suggestions` aparece al menos 1 propuesta del tipo "menciones de clientes".
+- **Local**: cargar 50 events en `interactions` con `action='LOG'` (mitad de ellos mencionando "cliente XYZ" y la otra mitad benignos) → `pnpm suggestor:run --org=demo` → en `/admin/suggestions` aparece al menos 1 propuesta del tipo "menciones de clientes".
 - **Idempotencia**: correr el job dos veces seguidas → count en `rule_suggestions` no cambia.
 - **Latencia**: con 200 events y K=5 clusters, el job termina en < 30 s.
 - **Calidad**: revisión humana del `reasoning` de Haiku → ≥ 80% de las sugerencias son razonables (no spam).

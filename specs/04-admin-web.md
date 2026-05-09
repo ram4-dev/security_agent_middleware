@@ -24,9 +24,9 @@ Sin admin web, no se pueden modificar reglas sin meterse a SQL. Para la demo es 
 - Visual rule builder con 3 tipos de regla:
   - **Match exacto / regex preset**: el admin elige de una galería (`AWS Access Key`, `Email`, `Tarjeta de crédito`, ...) — la regex vive escondida.
   - **Filename / path** (Layer 2): admin elige "archivos terminados en .env / id_rsa / *.pem".
-  - **En lenguaje natural** (Layer 3): admin escribe "no menciones nombres de clientes" — se embebe y va a `rules.layer='nl'`.
+  - **En lenguaje natural** (Layer 3): admin escribe "no menciones nombres de clientes" — se embebe y va a `policies.layer='nl'`.
 - CRUD completo: crear / listar / editar / habilitar-deshabilitar / eliminar.
-- Cambios de reglas se reflejan en el proxy en menos de 5 s (Supabase Realtime channel `rules_changed:<org_id>`, fallback polling 5 s).
+- Cambios de reglas se reflejan en el proxy en menos de 5 s (en prod: Supabase Realtime sobre `policies`; en local: polling 5 s).
 - Dashboard con 4 KPIs y gráfico de la última hora.
 - Approval queue muestra reglas sugeridas por el Layer 4 con preview ("hubiera matcheado N requests, ejemplos: ...") y permite Aceptar / Rechazar / Editar antes de aceptar.
 
@@ -54,7 +54,7 @@ Sin admin web, no se pueden modificar reglas sin meterse a SQL. Para la demo es 
 - [ ] `/admin/dashboard` muestra 4 KPIs: total events 24h, % BLOCK, % REDACT, latencia p50 del proxy.
 - [ ] `/admin/dashboard` muestra gráfico de barras con acciones de los últimos 100 events.
 - [ ] `/admin/rules` lista todas las reglas con `slug`, `layer`, `category`, `default_action`, toggle on/off.
-- [ ] Crear regla con el wizard visual (3 tipos arriba) → upsert en `rules` (con re-embedding si es NL). Toast de confirmación.
+- [ ] Crear regla con el wizard visual (3 tipos arriba) → upsert en `policies` vía Prisma (con re-embedding si es NL). Toast de confirmación.
 - [ ] `/admin/events` muestra feed live (Supabase Realtime) con `created_at`, `action` (badge color), `rule_hits[]`, `prompt_redacted` (truncado 200 chars), botón "ver detalle" → modal con todo el evento.
 - [ ] `/admin/suggestions` lista propuestas del Layer 4 con preview de matches retroactivos y CTAs Aceptar / Rechazar / Editar.
 - [ ] Todas las pantallas funcionan en desktop Chrome 130+.
@@ -115,7 +115,7 @@ Todos protegidos por middleware que valida sesión Supabase mock (cookie `admin_
 
 ### Supabase
 
-Reusa `rules` (de spec 02), `intercept_events` (de spec 01) y `rule_suggestions` (de spec 08).
+Reusa `policies` (de spec 02), `interactions` (de spec 01) y `rule_suggestions` (de spec 08).
 
 Tabla nueva en este spec — usuarios admin (mock, opcional para hack):
 
@@ -143,26 +143,26 @@ insert into organizations (id, name) values ('demo', 'Org Demo') on conflict do 
 ## Dependencias
 
 - **Spec `00-constitution.md`** — stack.
-- **Spec `01-engine-interceptor.md`** — los events vienen de `intercept_events` que el proxy escribe.
-- **Spec `02-vdb-bootstrap.md`** — para que la tabla `rules` y la función de embeddings ya existan.
+- **Spec `01-engine-interceptor.md`** — los events vienen de `interactions` que el proxy escribe.
+- **Spec `02-vdb-bootstrap.md`** — para que la tabla `policies` y la función `match_policies` ya existan.
 - **Spec `08-ai-suggestor.md`** — alimenta la approval queue.
 
 ## Tasks (paralelizables)
 
 - [ ] **T1** — Layout admin (`/admin/*`) con sidebar shadcn (Dashboard / Rules / Events / Suggestions), header con email del user logueado y logout. Done: navegación entre las 4 pantallas funciona.
 - [ ] **T2** — Login mock con magic link → cookie `admin_session`. Middleware que protege `/admin/*`. Done: ruta protegida redirige a login si no hay cookie.
-- [ ] **T3** — `/api/admin/metrics` que agrega de `intercept_events` filtrado por `org_id`. KPIs: total 24h, %BLOCK, %REDACT, p50 latencia total. Done: curl devuelve JSON con shape esperado.
+- [ ] **T3** — `/api/admin/metrics` que agrega de `interactions` filtrado por `org_id`. KPIs: total 24h, %BLOCK, %REDACT, p50 latencia total. Done: curl devuelve JSON con shape esperado.
 - [ ] **T4** — `/admin/dashboard` consumiendo T3 con `<KpiCard>` y `<ActionsBarChart>`. Done: pantalla muestra datos reales.
-- [ ] **T5** — `/admin/rules` con tabla + `<RuleWizard>` (3 caminos). Re-embedding en NL via cliente Supabase server-side. Done: crear regla NL nueva → aparece en VDB + visible en próximo `match_rules`.
+- [ ] **T5** — `/admin/rules` con tabla + `<RuleWizard>` (3 caminos). Re-embedding en NL via Prisma + provider de embeddings server-side. Done: crear regla NL nueva → aparece en `policies` + visible en próximo `match_policies`.
 - [ ] **T6** — `/admin/events` con `<EventsLiveFeed>` suscrito a Supabase Realtime. Filtros por action. Done: en otra pestaña dispará un BLOCK desde el proxy → la fila aparece sin refresh.
-- [ ] **T7** — `/admin/suggestions` consumiendo `/api/admin/suggestions` + acciones accept/reject/edit. Done: aceptar una sugerencia la convierte en `rules` con `source='ai-suggestor'`.
+- [ ] **T7** — `/admin/suggestions` consumiendo `/api/admin/suggestions` + acciones accept/reject/edit. Done: aceptar una sugerencia la convierte en una fila de `policies` con `source='ai-suggestor'`.
 - [ ] **T8** — Notificación visual cuando hay un `WARN` event (toast persistente + badge en sidebar). Done: trigger un WARN → aparece en cualquier pantalla del admin.
 
 ## Verification
 
 - Login con `admin@team22.dev` + código `123456` → entra al dashboard.
 - Crear regla NL `customer-name-mention` con body "no menciones nombres de clientes" → en `psql` la fila aparece con embedding no null.
-- Mandar request al proxy con `ANTHROPIC_BASE_URL=$URL` y prompt "el cliente Acme me pidió X" → `REDACT` con `ruleHits` que incluye la nueva regla.
+- Mandar request al proxy con `ANTHROPIC_BASE_URL=$URL` y prompt "el cliente Acme me pidió X" → `REDACT` con `policyHits` que incluye la nueva regla.
 - En `/admin/dashboard`, refrescar y ver `% REDACT` subir.
 - En `/admin/events`, ver la fila aparecer en vivo (sin refresh) con badge amarillo.
 - En `/admin/suggestions`, después de correr el Suggestor (spec 08) ≥ 1 vez, ver al menos 1 propuesta con preview.

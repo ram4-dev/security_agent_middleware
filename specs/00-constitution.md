@@ -96,10 +96,13 @@ request → [Regex layer ~5ms]
 |---|---|---|
 | LLM de juicio | **Anthropic Claude Haiku 4.5** vía SDK oficial | Latencia + costo bajos, prompt caching activo |
 | LLM de embeddings | **OpenAI `text-embedding-3-small`** o **Voyage `voyage-3-lite`** | Free tier suficiente para 48h |
-| Storage + Vector DB | **Supabase Postgres + extensión `pgvector`** | Auth + storage + vectores + tabla de logs en una cuenta |
+| DB local | **Postgres 16 + `pgvector`** vía Docker (`pgvector/pgvector:pg16`) | Setup en 30s con `docker compose up`, mismo cliente que prod |
+| DB prod | **Supabase Postgres** con extensión `vector` habilitada | Auth + storage + vectores en una cuenta, free tier alcanza |
+| ORM | **Prisma** (con `Unsupported("vector(1536)")` para embeddings) | Tipos generados, migraciones declarativas; `match_policies` y el ivfflat van en SQL manual |
+| Auth (admin) | **Supabase Auth** (`@supabase/ssr`) con magic links | Solo se usa en `/admin`. En local hay bypass mock |
+| Realtime (live feed) | **Polling 2s** en v1; Supabase Realtime cuando deploye en prod | Evita acoplar a una sola plataforma en local |
 | Frontends | **Next.js 16 App Router** + **shadcn/ui** + **Tailwind 4** | Standard, deploy directo a Vercel |
 | Hosting | **Vercel** (Functions Node runtime — necesitamos drivers) | Preview por PR para QA paralelo |
-| Auth | **Supabase Auth** con magic links — mock OK para el hack | Cero fricción, sin OAuth real |
 | Package manager | **pnpm** | Monorepo limpio si dividimos en `apps/` |
 | Lenguaje | TypeScript estricto en frontend y backend | — |
 
@@ -124,22 +127,24 @@ request → [Regex layer ~5ms]
 ### Estructura de repo (target)
 ```
 platanus-hack-26-ar-team-22/
+├── docker-compose.yml        # Postgres + pgvector para dev local
 ├── specs/                    # estos specs
 ├── research/                 # ya existe, no tocar
 ├── web/                      # Next.js 16 — landing + admin (single app)
-├── packages/
-│   ├── interceptor/          # core del proxy (cascada + redactor)
-│   ├── db/                   # cliente Supabase
-│   └── shared/               # tipos comunes (Action, Rule, InterceptEvent)
-├── seeds/                    # corpus inicial de reglas
-└── scripts/                  # seed-vdb, etc.
+│   ├── prisma/
+│   │   ├── schema.prisma     # modelos canónicos
+│   │   └── migrations/       # bloque manual al final: ivfflat + match_policies
+│   └── src/
+├── seeds/                    # corpus inicial de reglas (NL + regex/pattern)
+└── scripts/                  # seed-vdb, run-suggestor, etc.
 ```
 
-> Para el hack arrancamos con `web/` único (ya creado con `create-next-app`). La extracción a `packages/` queda como refactor opcional si sobra tiempo.
+> Para el hack arrancamos con `web/` único (ya creado con `create-next-app`). La extracción a `packages/{interceptor,db,shared}` queda como refactor opcional si sobra tiempo.
 
 ### Naming
 - Acciones del proxy: literal strings `"BLOCK" | "REDACT" | "WARN" | "LOG"` (uppercase, viajan así en JSON y en DB).
-- Tablas Supabase: `snake_case` plural (ej. `rules`, `intercept_events`, `organizations`).
+- Tablas Postgres: `snake_case` plural — las canónicas son **`policies`**, **`interactions`**, **`organizations`** (el spec 02 detalla schemas).
+- Modelos Prisma: `PascalCase` singular — `Policy`, `Interaction`, `Organization` (con `@@map(...)` al nombre snake_case).
 - Componentes React: `PascalCase`. Hooks: `useCamelCase`.
 
 ### Variables de entorno
