@@ -168,11 +168,56 @@ model Member {
   userId    String?    @unique @map("user_id")
   createdAt DateTime   @default(now()) @map("created_at")
 
-  organization Organization @relation(fields: [orgId], references: [id])
-  user         User?        @relation(fields: [userId], references: [id])
+  organization   Organization     @relation(fields: [orgId], references: [id])
+  user           User?            @relation(fields: [userId], references: [id])
+  cliTokens      CliToken[]
+  cliDeviceCodes CliDeviceCode[]
 
   @@unique([orgId, email])
   @@map("members")
+}
+
+/// Token persistente que el CLI guarda en `~/.tranquera/config.json` y
+/// manda en cada request al proxy via `x-tranquera-key`. Solo el hash
+/// vive en DB — la string original solo se devuelve una vez al aprobar
+/// el device code.
+model CliToken {
+  id         String    @id @default(uuid()) @db.Uuid
+  memberId   String    @map("member_id") @db.Uuid
+  tokenHash  String    @unique @map("token_hash")
+  label      String?
+  lastUsedAt DateTime? @map("last_used_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  revokedAt  DateTime? @map("revoked_at")
+
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([memberId])
+  @@map("cli_tokens")
+}
+
+/// OAuth-style device flow para que el CLI delegue auth al browser.
+/// El CLI crea uno con `POST /api/cli/device/start` y polling al `poll`,
+/// el user lo aprueba en `/cli/connect?code=USER-CODE` desde el browser
+/// (post-login Google).
+model CliDeviceCode {
+  deviceCode    String    @id @map("device_code")
+  userCode      String    @unique @map("user_code")
+  memberId      String?   @map("member_id") @db.Uuid
+  status        String    @default("pending") // pending | approved | expired
+  createdAt     DateTime  @default(now()) @map("created_at")
+  expiresAt     DateTime  @map("expires_at")
+  approvedAt    DateTime? @map("approved_at")
+  issuedTokenId String?   @map("issued_token_id") @db.Uuid
+  /// Token plaintext almacenado solo entre `approved` y la primera vez que
+  /// el CLI hace poll. El handler del poll lo borra apenas lo entrega.
+  /// Después de eso, solo queda el hash en `cli_tokens`.
+  secretToken   String?   @map("secret_token")
+
+  member Member? @relation(fields: [memberId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@map("cli_device_codes")
 }
 
 // =============================================================
