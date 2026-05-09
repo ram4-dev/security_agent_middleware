@@ -106,43 +106,69 @@ export function EventsFeed({ initialEvents }: { initialEvents: EventDTO[] }) {
         ) : (
           <ul className="flex flex-col gap-2">
             {visible.map((e) => (
-              <li
-                key={e.id}
-                className="border border-graphite-dark/15 bg-paper p-4"
-                style={{ borderRadius: "var(--radius)" }}
-              >
-                <div className="flex flex-wrap items-center gap-3 font-mono text-[11px] uppercase tracking-wider text-graphite">
-                  <span
-                    className={`px-2 py-1 font-semibold ${ACTION_STYLES[e.action]}`}
-                    style={{ borderRadius: "var(--radius)" }}
-                  >
-                    {e.action}
-                  </span>
-                  <span suppressHydrationWarning>// {formatTime(new Date(e.createdAt))}</span>
-                  <span>// {e.latencyTotalMs}ms</span>
-                  <span className="truncate">// trace · {e.traceId.slice(0, 12)}…</span>
-                  {e.upstreamStatus !== null ? (
-                    <span>// upstream · {e.upstreamStatus}</span>
-                  ) : (
-                    <span>// upstream · skipped</span>
-                  )}
-                </div>
-                <p className="mt-3 text-sm text-ink">{e.reason}</p>
-                {e.policyHits.length > 0 ? (
-                  <p className="mt-2 font-mono text-[11px] text-graphite">
-                    // hits ·{" "}
-                    {e.policyHits.map((h) => `${h.layer}/${h.slug}`).join(" · ")}
-                  </p>
-                ) : null}
-                <pre className="mt-3 max-h-32 overflow-hidden whitespace-pre-wrap break-words bg-paper-soft/40 p-3 font-mono text-[11px] leading-relaxed text-graphite-dark">
-                  {truncate(e.prompt, 280)}
-                </pre>
-              </li>
+              <EventCard key={e.id} event={e} />
             ))}
           </ul>
         )}
       </div>
     </div>
+  );
+}
+
+const PROMPT_PREVIEW_LEN = 280;
+
+function EventCard({ event: e }: { event: EventDTO }) {
+  const [expanded, setExpanded] = useState(false);
+  const truncatable = e.prompt.length > PROMPT_PREVIEW_LEN;
+
+  return (
+    <li
+      className="border border-graphite-dark/15 bg-paper p-4"
+      style={{ borderRadius: "var(--radius)" }}
+    >
+      <div className="flex flex-wrap items-center gap-3 font-mono text-[11px] uppercase tracking-wider text-graphite">
+        <span
+          className={`px-2 py-1 font-semibold ${ACTION_STYLES[e.action]}`}
+          style={{ borderRadius: "var(--radius)" }}
+        >
+          {e.action}
+        </span>
+        <span suppressHydrationWarning>// {formatTime(new Date(e.createdAt))}</span>
+        <span>// {e.latencyTotalMs}ms</span>
+        <span className="truncate">// trace · {e.traceId.slice(0, 12)}…</span>
+        {e.upstreamStatus !== null ? (
+          <span>// upstream · {e.upstreamStatus}</span>
+        ) : (
+          <span>// upstream · skipped</span>
+        )}
+      </div>
+      <p className="mt-3 text-sm text-ink">{e.reason}</p>
+      {e.policyHits.length > 0 ? (
+        <p className="mt-2 font-mono text-[11px] text-graphite">
+          // hits ·{" "}
+          {e.policyHits.map((h) => `${h.layer}/${h.slug}`).join(" · ")}
+        </p>
+      ) : null}
+      <div className="mt-3">
+        <pre
+          className={`whitespace-pre-wrap break-words bg-paper-soft/40 p-3 font-mono text-[11px] leading-relaxed text-graphite-dark transition-all ${
+            expanded ? "" : "max-h-32 overflow-hidden"
+          }`}
+          style={{ borderRadius: "var(--radius)" }}
+        >
+          {expanded ? e.prompt : truncate(e.prompt, PROMPT_PREVIEW_LEN)}
+        </pre>
+        {truncatable && (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="mt-1.5 font-mono text-[10px] uppercase tracking-wider text-graphite transition-colors hover:text-ink"
+          >
+            // {expanded ? "cerrar" : "expandir prompt"}
+          </button>
+        )}
+      </div>
+    </li>
   );
 }
 

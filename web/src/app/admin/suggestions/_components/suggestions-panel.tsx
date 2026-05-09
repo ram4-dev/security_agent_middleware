@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable react/jsx-no-comment-textnodes */
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 
 type Suggestion = {
   id: string;
@@ -36,6 +36,15 @@ const ACTION_STYLES: Record<string, string> = {
   LOG: "bg-zinc-500/10 text-zinc-700",
 };
 
+type SuggestorRunResult = {
+  ok: boolean;
+  analyzed?: number;
+  proposed?: number;
+  inserted?: number;
+  skipped?: number;
+  error?: string;
+};
+
 export function SuggestionsPanel({
   initialSuggestions,
 }: {
@@ -43,6 +52,9 @@ export function SuggestionsPanel({
 }) {
   const [suggestions, setSuggestions] = useState(initialSuggestions);
   const [, startTransition] = useTransition();
+  const [running, setRunning] = useState(false);
+  const [runResult, setRunResult] = useState<SuggestorRunResult | null>(null);
+  const clearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   async function refresh() {
     const res = await fetch("/api/admin/suggestions", { cache: "no-store" });
@@ -55,6 +67,30 @@ export function SuggestionsPanel({
           ...rows.filter((r) => r.sourceHint !== "google_workspace"),
         ])
       );
+    }
+  }
+
+  async function runAiSuggestor() {
+    setRunning(true);
+    setRunResult(null);
+    if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
+
+    try {
+      const res = await fetch("/api/admin/suggestor/run", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = (await res.json()) as SuggestorRunResult;
+      setRunResult(data);
+      if (data.ok && (data.inserted ?? 0) > 0) {
+        await refresh();
+      }
+    } catch {
+      setRunResult({ ok: false, error: "Error de red al contactar el suggestor." });
+    } finally {
+      setRunning(false);
+      clearTimerRef.current = setTimeout(() => setRunResult(null), 5000);
     }
   }
 
@@ -72,6 +108,49 @@ export function SuggestionsPanel({
 
   return (
     <div className="flex flex-col gap-10">
+      {/* AI Suggestor trigger */}
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={runAiSuggestor}
+            disabled={running}
+            className="inline-flex items-center gap-2 border border-graphite-dark/25 px-4 py-2 font-mono text-xs uppercase tracking-wider text-ink transition-colors hover:bg-graphite-dark/5 disabled:cursor-not-allowed disabled:opacity-50"
+            style={{ borderRadius: "var(--radius)" }}
+          >
+            {running ? (
+              <>
+                <span
+                  className="inline-block h-2 w-2 animate-pulse rounded-full bg-graphite"
+                  aria-hidden="true"
+                />
+                analizando...
+              </>
+            ) : (
+              "analizar con IA"
+            )}
+          </button>
+        </div>
+
+        {runResult && (
+          <span
+            className={`font-mono text-xs ${
+              runResult.ok && (runResult.inserted ?? 0) > 0
+                ? "text-emerald-700"
+                : runResult.ok
+                  ? "text-graphite"
+                  : "text-red-700"
+            }`}
+          >
+            {runResult.ok
+              ? (runResult.inserted ?? 0) > 0
+                ? `// ${runResult.inserted} nuevas sugerencias generadas`
+                : "// sin patrones nuevos detectados"
+              : `// error: ${runResult.error ?? "desconocido"}`}
+          </span>
+        )}
+      </div>
+
       <div className="flex flex-col gap-4">
         <span className="font-mono text-xs uppercase tracking-wider text-graphite">
           // {pending.length} pendientes
