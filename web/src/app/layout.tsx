@@ -20,6 +20,26 @@ export const metadata: Metadata = {
   title: "Tranquera — Un paso controlado entre la intención y la respuesta",
   description:
     "El firewall de Claude Code corporativo. Reglas no-code, redacción en runtime y auditoría completa.",
+  icons: {
+    icon: [
+      { url: "/logo.ico", sizes: "any" },
+      { url: "/logo.jpeg", type: "image/jpeg" },
+    ],
+    apple: "/logo.jpeg",
+  },
+  openGraph: {
+    title: "Tranquera — Un paso controlado entre la intención y la respuesta",
+    description:
+      "El firewall de Claude Code corporativo. Reglas no-code, redacción en runtime y auditoría completa.",
+    images: ["/logo.jpeg"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Tranquera",
+    description:
+      "El firewall de Claude Code corporativo. Reglas no-code, redacción en runtime y auditoría completa.",
+    images: ["/logo.jpeg"],
+  },
 };
 
 export default function RootLayout({

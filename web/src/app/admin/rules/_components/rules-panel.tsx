@@ -2,6 +2,7 @@
 /* eslint-disable react/jsx-no-comment-textnodes */
 
 import { useState, useTransition } from "react";
+import { ConfirmDialog, Toast, type ConfirmConfig, type ToastState } from "@/components/feedback";
 import {
   ADMIN_ACTIONS,
   POLICY_DOMAINS,
@@ -49,6 +50,8 @@ export function RulesPanel({ initialRules }: { initialRules: RuleDTO[] }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const [toast, setToast] = useState<ToastState>(null);
+  const [pendingDelete, setPendingDelete] = useState<RuleDTO | null>(null);
 
   async function refresh() {
     const res = await fetch("/api/admin/rules", { cache: "no-store" });
@@ -90,16 +93,46 @@ export function RulesPanel({ initialRules }: { initialRules: RuleDTO[] }) {
     if (res.ok) await refresh();
   }
 
-  async function handleDelete(rule: RuleDTO) {
-    if (!confirm(`¿Borrar regla "${rule.slug}"?`)) return;
+  function handleDelete(rule: RuleDTO) {
+    setPendingDelete(rule);
+  }
+
+  async function confirmDelete() {
+    const rule = pendingDelete;
+    setPendingDelete(null);
+    if (!rule) return;
     const res = await fetch(`/api/admin/rules/${rule.id}`, {
       method: "DELETE",
     });
-    if (res.ok) await refresh();
+    if (res.ok) {
+      setToast({ kind: "success", message: `Regla "${rule.slug}" eliminada` });
+      await refresh();
+    } else {
+      const data = await res.json().catch(() => null);
+      setToast({ kind: "error", message: data?.error ?? "no se pudo borrar" });
+    }
   }
+
+  const deleteConfig: ConfirmConfig | null = pendingDelete
+    ? {
+        title: `¿Borrar regla "${pendingDelete.slug}"?`,
+        body: `Va a dejar de evaluarse en el próximo prompt. Los eventos pasados se mantienen para auditoría.`,
+        confirmLabel: "Borrar",
+        cancelLabel: "Cancelar",
+        destructive: true,
+      }
+    : null;
 
   return (
     <div className="flex flex-col gap-8">
+      <Toast toast={toast} onClose={() => setToast(null)} />
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        config={deleteConfig}
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
+
       <div className="flex items-center justify-between">
         <span className="font-mono text-xs uppercase tracking-wider text-graphite">
           // {rules.length} reglas · {rules.filter((r) => r.isActive).length} activas

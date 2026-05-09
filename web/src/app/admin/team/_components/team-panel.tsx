@@ -2,6 +2,7 @@
 /* eslint-disable react/jsx-no-comment-textnodes */
 
 import { useState, useTransition } from "react";
+import { ConfirmDialog, Toast, type ConfirmConfig, type ToastState } from "@/components/feedback";
 import { isValidEmail, type MemberDTO } from "@/lib/team";
 
 export function TeamPanel({
@@ -18,6 +19,8 @@ export function TeamPanel({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const [toast, setToast] = useState<ToastState>(null);
+  const [pendingRemove, setPendingRemove] = useState<MemberDTO | null>(null);
 
   async function refresh() {
     const res = await fetch("/api/admin/team", { cache: "no-store" });
@@ -53,16 +56,36 @@ export function TeamPanel({
     }
   }
 
-  async function handleRemove(member: MemberDTO) {
-    if (!confirm(`¿Remover a "${member.email}" del equipo?`)) return;
+  function handleRemove(member: MemberDTO) {
+    setPendingRemove(member);
+  }
+
+  async function confirmRemove() {
+    const member = pendingRemove;
+    setPendingRemove(null);
+    if (!member) return;
     const res = await fetch(`/api/admin/team/${member.id}`, { method: "DELETE" });
     if (!res.ok) {
       const data = await res.json().catch(() => null);
-      alert(data?.error ?? "no se pudo remover");
+      setToast({ kind: "error", message: data?.error ?? "no se pudo remover" });
       return;
     }
+    setToast({ kind: "success", message: `${member.email} fue removido del equipo` });
     await refresh();
   }
+
+  const removeConfig: ConfirmConfig | null = pendingRemove
+    ? {
+        title: `¿Remover a ${pendingRemove.email}?`,
+        body:
+          pendingRemove.role === "admin"
+            ? "Es admin. Va a perder acceso al back-office y a editar policies. Su atribución en eventos pasados se mantiene."
+            : "Su token CLI deja de validar; sus prompts seguirán pasando por la tranquera con el rol default de la org pero ya no quedan atribuidos a esta cuenta.",
+        confirmLabel: "Remover",
+        cancelLabel: "Cancelar",
+        destructive: true,
+      }
+    : null;
 
   const admins = members.filter((m) => m.role === "admin");
   const devs = members.filter((m) => m.role === "dev");
@@ -71,8 +94,25 @@ export function TeamPanel({
 
   return (
     <div className="flex flex-col gap-8">
+      <Toast toast={toast} onClose={() => setToast(null)} />
+      <ConfirmDialog
+        open={pendingRemove !== null}
+        config={removeConfig}
+        onConfirm={confirmRemove}
+        onCancel={() => setPendingRemove(null)}
+      />
+
       {/* Comando para self-join via CLI */}
-      <CliInviteCard orgId={orgId} command={cliCommand} />
+      <CliInviteCard
+        orgId={orgId}
+        command={cliCommand}
+        onCopyFailed={(value) =>
+          setToast({
+            kind: "error",
+            message: `No pude copiar al portapapeles. Seleccioná manualmente: ${value}`,
+          })
+        }
+      />
 
       {/* Form */}
       <form
@@ -216,7 +256,15 @@ function StatusDot({ active }: { active: boolean }) {
   );
 }
 
-function CliInviteCard({ orgId, command }: { orgId: string; command: string }) {
+function CliInviteCard({
+  orgId,
+  command,
+  onCopyFailed,
+}: {
+  orgId: string;
+  command: string;
+  onCopyFailed: (value: string) => void;
+}) {
   const [copied, setCopied] = useState<"command" | "org" | null>(null);
 
   async function copy(value: string, kind: "command" | "org") {
@@ -225,7 +273,7 @@ function CliInviteCard({ orgId, command }: { orgId: string; command: string }) {
       setCopied(kind);
       setTimeout(() => setCopied((c) => (c === kind ? null : c)), 1500);
     } catch {
-      window.prompt("Copiá manualmente:", value);
+      onCopyFailed(value);
     }
   }
 
