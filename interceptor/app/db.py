@@ -18,9 +18,18 @@ def _normalize_url(url: str) -> str:
 
 
 def _connect_args(url: str) -> dict:
-    """Force TLS for remote hosts. asyncpg accepts a string SSL mode."""
+    """Force TLS for public remote hosts only.
+
+    Internal Railway/Fly addresses (`*.railway.internal`, `*.flycast`) live on
+    the platform's private network and don't terminate SSL; forcing TLS there
+    would fail the handshake. asyncpg accepts a string SSL mode.
+    """
     host = urlparse(url).hostname or ""
-    is_local = host in {"", "localhost", "127.0.0.1", "host.docker.internal"}
+    is_local = (
+        host in {"", "localhost", "127.0.0.1", "host.docker.internal"}
+        or host.endswith(".railway.internal")
+        or host.endswith(".flycast")
+    )
     if is_local:
         return {}
     return {"ssl": "require"}
