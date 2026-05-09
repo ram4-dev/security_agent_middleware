@@ -109,8 +109,45 @@ interceptor/
 │   ├── block_response.py   # synthesizer de Message en BLOCK
 │   └── upstream.py         # cliente httpx contra api.anthropic.com
 └── scripts/
-    └── seed_policies.py    # 4 reglas regex idempotentes (org='demo')
+    ├── seed_policies.py    # 4 reglas regex mínimas para smoke-test (deprecado)
+    └── seed_prod.py        # seed completo de producción — ver sección abajo
 ```
+
+## Seed de producción
+
+`scripts/seed_prod.py` carga el conjunto de datos realista para producción y demos.
+
+**Qué inserta:**
+
+| Tabla | Cantidad | Descripción |
+|---|---|---|
+| `policies` | 25 | credentials · pii · code · business_policy · internal_paths |
+| `interactions` | 25 | 8 LOG · 6 WARN · 6 REDACT · 5 BLOCK distribuidos en 30 días |
+| `rule_suggestions` | 6 | 3 pending · 1 accepted · 2 rejected (con motivo) |
+
+**Categorías de policies incluidas:**
+- **Credentials (regex):** AWS Access Key, GitHub token, PEM key, Anthropic/OpenAI API keys, connection strings con credenciales, variables de entorno con secretos.
+- **PII (regex + nl):** tarjeta de crédito, RUT, DNI, IBAN, teléfonos masivos, registros de salud, datos financieros personales.
+- **Code (regex + nl):** credenciales hardcodeadas en código, bypass de seguridad con TODO, código sin tests, sin manejo de errores.
+- **Business policy (nl):** roadmap de producto, estrategia de precios, comparación con competidores, OKRs confidenciales, criterios de implementación (code review, CI/CD).
+- **Internal paths (pattern):** archivos `.env`/`.pem`/`.key`, configuración de infraestructura (Terraform, K8s).
+
+**Ejecución:**
+
+```bash
+cd interceptor
+
+# local (Docker Postgres)
+uv run python scripts/seed_prod.py
+
+# producción (Supabase)
+DATABASE_URL='postgresql://...' uv run python scripts/seed_prod.py
+
+# org específica
+uv run python scripts/seed_prod.py --org acme
+```
+
+Es idempotente: re-correr actualiza policies, no duplica interactions ni suggestions.
 
 ## Deploy a Railway
 
@@ -125,9 +162,8 @@ El schema canónico vive en `web/prisma/`. Antes del primer deploy:
    (Dashboard → Database → Extensions).
 2. Desde `web/`, apuntar `DATABASE_URL` al DSN directo de Supabase
    (no el pooler) y correr `pnpm prisma migrate deploy`.
-3. Sembrar al menos las regex iniciales (por ahora,
-   `cd interceptor && uv run python scripts/seed_policies.py`
-   con la `DATABASE_URL` de Supabase).
+3. Cargar los datos de producción:
+   `cd interceptor && DATABASE_URL='...' uv run python scripts/seed_prod.py`
 
 ### 2 — crear el servicio en Railway
 
