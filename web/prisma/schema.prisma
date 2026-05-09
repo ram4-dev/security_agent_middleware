@@ -81,6 +81,10 @@ enum SuggestionStatus {
 model Organization {
   id                String   @id // ej. 'demo', 'acme'
   name              String
+  /// Dominio de email que matchea automáticamente devs/admins a esta org
+  /// en el primer login con Google. ej. "acme.com". Null para orgs creadas
+  /// fuera del flujo de auto-onboarding.
+  emailDomain       String?  @unique @map("email_domain")
   upstreamApiKeyRef String?  @map("upstream_api_key_ref") // formato "env:<VAR>" o "vault:<uuid>" — nunca la key cruda
   createdAt         DateTime @default(now()) @map("created_at")
 

@@ -33,10 +33,14 @@ export async function getAdminSession(): Promise<AdminSession | null> {
   if (isAuthConfigured()) {
     const session = await auth();
     if (!session?.user?.email) return null;
+    if (!session.user.orgId) {
+      // El JWT no tiene orgId todavía (ej. primer login en flight, o falló
+      // la resolución). Tratar como no logueado — el callback session lo
+      // va a poblar en el próximo request.
+      return null;
+    }
     return {
-      // Fase 2: resolver orgId real desde members.email → org.
-      // Por ahora, todos quedan en `demo` hasta que esa fase se cierre.
-      orgId: DEMO_ORG_ID,
+      orgId: session.user.orgId,
       email: session.user.email,
       name: session.user.name,
       image: session.user.image,

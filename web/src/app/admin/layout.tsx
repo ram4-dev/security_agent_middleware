@@ -2,6 +2,7 @@
 // (src/proxy.ts) has already gated access by the time we render here.
 /* eslint-disable react/jsx-no-comment-textnodes */
 import Link from "next/link";
+import { isAuthConfigured, signOut } from "@/auth";
 import { getAdminSession } from "@/lib/admin-session";
 import { AdminNav } from "./_components/nav";
 
@@ -12,6 +13,7 @@ export default async function AdminLayout({
 }) {
   const session = await getAdminSession();
   const email = session?.email ?? "—";
+  const orgId = session?.orgId ?? "—";
 
   return (
     <div className="min-h-screen bg-paper text-ink">
@@ -27,8 +29,9 @@ export default async function AdminLayout({
             </span>
           </Link>
           <div className="flex items-center gap-4 font-mono text-xs uppercase tracking-wider text-graphite">
-            <span>// org · demo</span>
+            <span>// org · {orgId}</span>
             <span className="hidden md:inline">// {email}</span>
+            {isAuthConfigured() ? <SignOutButton /> : null}
           </div>
         </div>
       </header>
@@ -37,14 +40,33 @@ export default async function AdminLayout({
         <aside className="w-44 shrink-0">
           <AdminNav />
           <p className="mt-10 font-mono text-[11px] leading-relaxed text-graphite">
-            // demo session
+            // org · {orgId}
             <br />
-            // single tenant · org=demo
+            // {isAuthConfigured() ? "google session" : "demo session"}
           </p>
         </aside>
         <main className="min-w-0 flex-1">{children}</main>
       </div>
     </div>
+  );
+}
+
+function SignOutButton() {
+  return (
+    <form
+      action={async () => {
+        "use server";
+        await signOut({ redirectTo: "/" });
+      }}
+    >
+      <button
+        type="submit"
+        className="border border-graphite-dark/30 px-2 py-1 transition-colors hover:border-ink hover:text-ink"
+        style={{ borderRadius: "var(--radius)" }}
+      >
+        salir
+      </button>
+    </form>
   );
 }
 
