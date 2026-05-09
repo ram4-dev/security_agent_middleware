@@ -551,7 +551,7 @@ function InstallSection() {
           <InstallStep
             n="02"
             title="ANTHROPIC_BASE_URL al rc"
-            body="Variable estándar de Anthropic. Cero invasión: si te arrepentís, dos líneas en tu rc y volvés al estado anterior."
+            body="Variable estándar de Anthropic. Cero invasión: si te arrepentís, npx tranquera logout revoca el token y saca la export del rc. Volvés al estado anterior con un comando."
           />
           <InstallStep
             n="03"

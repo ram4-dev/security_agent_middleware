@@ -25,7 +25,7 @@ Reabrís la terminal (o `source` del rc) y usás `claude` igual que siempre.
 | `setup` | Login + configura shell rc. Idempotente: si ya hay token válido, salta el login. |
 | `login` | Fuerza un nuevo device flow (útil después de `logout`). |
 | `whoami` | Muestra a qué org / member estás vinculado. |
-| `logout` | Revoca tu token y limpia `~/.tranquera/config.json`. |
+| `logout` | Revoca tu token, limpia `~/.tranquera/config.json` y saca el `export ANTHROPIC_BASE_URL` del rc. Pasá `--keep-rc` si querés conservar la export. |
 | `status` | Estado actual: rc + token + ping al proxy. |
 | `help` | Esta ayuda. |
 
@@ -40,11 +40,40 @@ Reabrís la terminal (o `source` del rc) y usás `claude` igual que siempre.
 
 `~/.tranquera/config.json` (permisos `0600`). Contiene tu token de CLI, el `proxy_url` y el `member` resuelto. Es el patrón estándar de CLIs (igual que `~/.aws/`, `~/.gh/`, `~/.docker/`).
 
+## ¿Cómo me desconecto?
+
+Un solo comando deja todo como antes:
+
+```bash
+npx tranquera logout
+```
+
+Eso hace **tres** cosas:
+
+1. Le avisa al server que revoque tu token (pierde validez de inmediato).
+2. Borra `~/.tranquera/config.json`.
+3. Saca el bloque `# tranquera · firewall de Claude Code` + la línea `export ANTHROPIC_BASE_URL=...` de tu rc (`~/.zshrc`, `~/.bashrc`/`~/.bash_profile` o `~/.config/fish/config.fish` según `$SHELL`).
+
+Para limpiar la **terminal que ya estaba abierta** (la variable sigue exportada en su entorno):
+
+```bash
+unset ANTHROPIC_BASE_URL          # bash / zsh
+set -e ANTHROPIC_BASE_URL         # fish
+```
+
+O simplemente abrí una terminal nueva.
+
+> ⚠️ Si saltás este paso, Claude Code va a seguir ruteando al proxy en esa terminal y, como tu token quedó revocado, vas a recibir `401 unknown or revoked tranquera token` en cada prompt.
+
+¿Querés conservar la export en el rc (por ejemplo, para volver más tarde con `npx tranquera login`)? Pasá `--keep-rc`:
+
+```bash
+npx tranquera logout --keep-rc
+```
+
 ## ¿Qué pasa si el proxy se cae?
 
-Tu request va a fallar igual que si Anthropic estuviera caído. El CLI no tiene fallback automático — si querés volver a Anthropic directo, `unset ANTHROPIC_BASE_URL` en tu sesión actual.
-
-Para sacar la export del rc de raíz: borrá las dos líneas que el CLI agregó (las marca con `# tranquera · firewall de Claude Code`).
+Tu request va a fallar igual que si Anthropic estuviera caído. El CLI no tiene fallback automático — si querés volver a Anthropic directo en una sesión, `unset ANTHROPIC_BASE_URL` (o `set -e` en fish). Para desconectarte de raíz, usá `npx tranquera logout`.
 
 ## ¿Qué viaja al proxy?
 

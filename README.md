@@ -284,6 +284,15 @@ $  source ~/.zshrc
 $  claude "ayudame a refactorear esto"   # va por la tranquera, pero el dev no lo nota
 ```
 
+**¿Cómo se desconecta?** Un solo comando deja todo como antes:
+
+```bash
+$  npx tranquera logout              # revoca el token + borra ~/.tranquera/config.json + saca el export del rc
+$  unset ANTHROPIC_BASE_URL          # solo si la terminal ya estaba abierta (en fish: set -e ANTHROPIC_BASE_URL)
+```
+
+Detalle completo y flag `--keep-rc` en [`cli/README.md`](./cli/README.md#cómo-me-desconecto).
+
 ---
 
 ## Quick start local
