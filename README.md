@@ -1,8 +1,10 @@
-<img src="./project-logo.png" alt="Tranquera" width="160" align="right" />
+<p align="center">
+  <img src="./tranquera-mark.png" alt="Tranquera" width="96" />
+</p>
 
-# Tranquera
+<h1 align="center">Tranquera</h1>
 
-> Un paso controlado entre la intención y la respuesta.
+<p align="center"><em>Un paso controlado entre la intención y la respuesta.</em></p>
 
 **Tranquera** es el firewall de **Claude Code corporativo**. Cada empresa configura `ANTHROPIC_BASE_URL` apuntando a un proxy modificable que aplica reglas no-code en runtime — cascada **Regex → Pattern → Haiku judge** con menos de 200 ms de overhead — y devuelve cuatro acciones explícitas: `BLOCK · REDACT · WARN · LOG`. El compliance officer (no técnico) arma las reglas con un visual builder; el dev usa Claude Code igual que siempre; un AI Suggestor cierra el loop proponiendo reglas nuevas a partir de lo que está pasando bajo el radar.
 
