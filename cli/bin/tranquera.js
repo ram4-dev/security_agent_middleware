@@ -290,6 +290,16 @@ function composeProxyBaseUrl(proxyUrl, token) {
   return `${base}/cli/${token}`;
 }
 
+// If the current shell exports a different ANTHROPIC_BASE_URL it will shadow
+// the line we just wrote to the rc until the dev opens a new shell. Without
+// the path-based token the interceptor returns 401 (B1 fix), so misconfig
+// fails loud — but it's friendlier to flag the shadowing during setup.
+function detectShadowingBaseUrl(expectedBaseUrl) {
+  const current = process.env.ANTHROPIC_BASE_URL;
+  if (!current || current === expectedBaseUrl) return null;
+  return current;
+}
+
 // -------------------------------------------------------------
 // Commands
 // -------------------------------------------------------------
@@ -352,6 +362,16 @@ async function cmdSetup(args) {
     console.log(`  ${c("green", "·")} agregué la export a ${shell.rcPath}`);
   } else {
     console.log(`  ${c("dim", "·")} ya estaba configurado en ${shell.rcPath} (si rotaste el token, corré ${c("bold", "npx tranquera login")} y editá la export a mano)`);
+  }
+
+  const shadowing = detectShadowingBaseUrl(baseUrlForClaude);
+  if (shadowing) {
+    console.log("");
+    console.log(`  ${c("yellow", "⚠")} tu shell actual ya tiene ${c("bold", "ANTHROPIC_BASE_URL")} en otro valor:`);
+    console.log(`      ${c("dim", shadowing)}`);
+    console.log(`    Eso pisa la export del rc hasta que abras un shell nuevo.`);
+    console.log(`    Si no termina en ${c("bold", "/cli/<token>")}, el interceptor te va a devolver 401.`);
+    console.log(`    Solución: ${c("bold", "unset ANTHROPIC_BASE_URL")} (o abrí otra terminal).`);
   }
 
   process.stdout.write("  · verificando proxy… ");

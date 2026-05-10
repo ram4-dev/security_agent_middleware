@@ -161,11 +161,18 @@ async def _persist_interaction(
 
 
 @app.post("/v1/messages")
-async def messages(
-    request: Request,
-    session: Annotated[AsyncSession, Depends(get_session)],
-):
-    return await _process_messages(request, session, caller=None)
+async def messages_unauthorized():
+    # The unattributed route is closed: every legitimate caller goes through
+    # /cli/{token}/v1/messages thanks to `tranquera setup`. Anyone hitting
+    # this path is misconfigured (or probing) — fail loud instead of writing
+    # orphan rows under the default org.
+    return JSONResponse(
+        {
+            "error": "missing tranquera token",
+            "hint": "run `npx tranquera setup` so ANTHROPIC_BASE_URL points to /cli/<token>",
+        },
+        status_code=401,
+    )
 
 
 @app.post("/cli/{token}/v1/messages")

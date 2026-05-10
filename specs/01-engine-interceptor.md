@@ -213,6 +213,43 @@ Tabla `policies` y función `match_policies` viven en spec `02-vdb-bootstrap.md`
 - [ ] **T8** — Smoke tests (vitest) de los 3 escenarios demo (leak credencial, nombre cliente, benigno). Done: `pnpm test` pasa los 3.
 - [ ] **T9** — Métricas de latencia por capa al log + headers diagnósticos `x-team22-trace-id` y `x-team22-action`. Done: curl ve los headers en cada response.
 
+## Backlog / pendientes detectados
+
+> Pendientes que surgieron en revisiones posteriores al spec original. No están escalados a tasks formales todavía — quedan acá para no perderlos.
+
+- **B1 — Cerrar `/v1/messages` sin atribución (security)** ✅ **fixed**. El handler abierto `POST /v1/messages` (`interceptor/app/main.py`) ahora devuelve `401 {"error": "missing tranquera token", ...}` con hint a `npx tranquera setup`. Cualquier caller legítimo entra por `/cli/{token}/v1/messages` (la CLI ya escribe `ANTHROPIC_BASE_URL=<proxy>/cli/<token>` durante setup). Side-effect bueno: cuando alguien tiene la env mal seteada (sin `/cli/<token>`), Claude Code muestra un 401 visible en pantalla en vez de tragarse los prompts contra `default_org_id` y dejarlos huérfanos en la DB.
+
+  Contexto histórico (lo que estaba pasando antes del fix): la ruta abierta atribuía al `default_org_id` (o al header `x-team22-org-key`, no validado contra ninguna tabla), permitiendo:
+  - pollutar `interactions` con tráfico anónimo (incluso bajo `org_id` de un cliente real adivinado),
+  - gatillar el Haiku judge contra orgs con NL policies activas (consume tokens del `anthropic_judge_api_key` nuestro),
+  - usar el proxy como relay a Anthropic con su propia `x-api-key` (egress y rate limits cuentan contra nosotros),
+  - inferir policies activas vía respuestas BLOCK (que incluyen `slug` y `rule`).
+
+  **Mitigaciones complementarias (post-hack)**: rate limiting por IP (middleware FastAPI tipo `slowapi` o Cloudflare delante), allowlist explícita de `org_id` válidos, log estructurado del IP origen. La rama `caller is None` en `_process_messages` quedó como dead code después del fix; simplificarla a `caller: CliCaller` (no-opcional) es follow-up para evitar reintroducir el bug por accidente.
+
+- **B2 — Alinear UX de BLOCK con la promesa del landing**. El landing vende:
+
+  > *"El dev sabe dónde se desalineó. Cada decisión, explicada. Devolver un Message sintético en vez de un 403 no es casualidad."*
+
+  con un ejemplo de copy tight y específico:
+
+  > *"Tu prompt se alejó de la política aws-access-key: detectamos un patrón de AWS Secret Access Key. Para trabajar con credenciales reales dentro del marco de la org, abrí un ticket con tu admin."*
+
+  El `_block_text` actual (`interceptor/app/block_response.py:20`) diverge: es más largo, conversacional, arranca con "Antes de continuar, hay algo que vale la pena tener en cuenta", y no menciona qué *patrón* se detectó (solo el `slug` y la `rule`). No hay testing visual en Claude Code real.
+
+  **Acción**: ajustar el template para acercarlo al landing (mencionar el patrón detectado, CTA explícito al admin, tono más directo) y validar render en CLI real.
+
+  **Sub-item — inconsistencia de naming**: el codebase mezcla `team22` y `tranquera`:
+  - headers de respuesta: `x-team22-trace-id`, `x-team22-action` (`main.py:259-260`)
+  - `stop_reason`: `tranquera_blocked` (`block_response.py:42`)
+  - landing y spec original (este archivo, AC#3): `team22_blocked`
+
+  Decidir canónico antes de tocar el template. Sugerido: migrar todo a `tranquera-*` / `tranquera_blocked` para alinear con la marca, y aceptar `x-team22-*` como alias deprecado si hay clientes que ya lo consumen.
+
+  **Sub-item — exponer latencia visible**: el landing muestra `// total · 9ms` como parte de la promesa "<200 ms invisible". Hoy `latency_total_ms` se persiste en `interactions` pero no se devuelve como header. Considerar `x-tranquera-latency-ms` para que el dev vea el costo real en cada request.
+
+---
+
 ## Verification
 
 - **Smoke con CLI real**: `ANTHROPIC_BASE_URL=$URL claude "acá va mi AKIAIOSFODNN7EXAMPLE"` → respuesta `🛡️ Tu request fue bloqueado por la política aws-access-key...`.
