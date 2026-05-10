@@ -11,6 +11,7 @@ import { Reveal, Stagger, StaggerItem } from "@/components/motion";
 
 import { CascadeDemo } from "./_components/cascade-demo";
 import { Hero } from "./_components/hero";
+import { InstallTerminal } from "./_components/install-terminal";
 import { SiteHeader, Wordmark } from "./_components/site-header";
 import { TraceDemo } from "./_components/trace-demo";
 
@@ -375,48 +376,6 @@ function InstallSection() {
         </p>
       </div>
     </section>
-  );
-}
-
-function InstallTerminal() {
-  return (
-    <div
-      className="overflow-hidden border border-graphite-dark/20 bg-ink"
-      style={{ borderRadius: "var(--radius)" }}
-    >
-      <div className="flex items-center justify-between border-b border-paper/10 px-5 py-3 font-mono text-[11px] uppercase tracking-wider text-paper/55">
-        <span>// terminal</span>
-        <span className="hidden md:inline">// onboarding · ~ 30 segundos</span>
-      </div>
-      <div className="px-6 py-7 font-mono text-sm leading-relaxed text-paper md:px-10 md:py-9 md:text-base">
-        <div className="flex items-baseline gap-3">
-          <span className="text-paper/45">$</span>
-          <span className="text-paper">npx tranquera setup</span>
-        </div>
-        <pre className="mt-5 whitespace-pre-wrap text-[13px] leading-relaxed text-paper/75 md:text-sm">
-          {`  ▎ tranquera · login
-  └─ app  https://tranquera.app
-
-  · iniciando device flow…  ok
-
-  Abrí el browser y aprobá:
-      https://tranquera.app/cli/connect?code=KXZ2-RZ96
-
-  · esperando aprobación…  ok
-
-  ▎ tranquera · setup
-  ├─ proxy   https://proxy.tranquera.app
-  ├─ shell   zsh
-  ├─ rc      ~/.zshrc
-  └─ member  jaime@acme.com · org=acme
-
-  · agregué la export a ~/.zshrc
-  · verificando proxy…  ok
-
-  Listo. Reabrí tu terminal y usá Claude Code igual que siempre.`}
-        </pre>
-      </div>
-    </div>
   );
 }
 
