@@ -2,6 +2,7 @@
 /* eslint-disable react/jsx-no-comment-textnodes */
 
 import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { EventDTO, PolicyHitRecord } from "@/lib/events";
 
 const POLL_MS = 3000;
@@ -60,20 +61,35 @@ export function EventsFeed({ initialEvents }: { initialEvents: EventDTO[] }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <FilterChip
-            active={filter === ""}
-            onClick={() => setFilter("")}
-            label={`todos · ${events.length}`}
-          />
-          {ACTIONS.map((a) => (
-            <FilterChip
-              key={a}
-              active={filter === a}
-              onClick={() => setFilter(a)}
-              label={`${a} · ${events.filter((e) => e.action === a).length}`}
-            />
-          ))}
+        <div className="flex flex-wrap items-center gap-2">
+          {(() => {
+            const counts: Record<EventDTO["action"], number> = {
+              BLOCK: events.filter((e) => e.action === "BLOCK").length,
+              REDACT: events.filter((e) => e.action === "REDACT").length,
+              WARN: events.filter((e) => e.action === "WARN").length,
+              LOG: events.filter((e) => e.action === "LOG").length,
+            };
+            const total = events.length;
+            const max = Math.max(1, ...Object.values(counts));
+            return (
+              <>
+                <FilterChip
+                  active={filter === ""}
+                  onClick={() => setFilter("")}
+                  label={`todos · ${total}`}
+                />
+                {ACTIONS.map((a) => (
+                  <FilterChip
+                    key={a}
+                    active={filter === a}
+                    onClick={() => setFilter(a)}
+                    label={`${a} · ${counts[a]}`}
+                    ratio={counts[a] / max}
+                  />
+                ))}
+              </>
+            );
+          })()}
         </div>
         <div className="flex items-center gap-3 font-mono text-[11px] uppercase tracking-wider text-graphite">
           <button
@@ -105,9 +121,11 @@ export function EventsFeed({ initialEvents }: { initialEvents: EventDTO[] }) {
           </div>
         ) : (
           <ul className="flex flex-col gap-2">
-            {visible.map((e) => (
-              <EventCard key={e.id} event={e} />
-            ))}
+            <AnimatePresence initial={false}>
+              {visible.map((e) => (
+                <FreshEvent key={e.id} event={e} />
+              ))}
+            </AnimatePresence>
           </ul>
         )}
       </div>
@@ -118,6 +136,33 @@ export function EventsFeed({ initialEvents }: { initialEvents: EventDTO[] }) {
 const MESSAGE_PREVIEW_LEN = 240;
 const PROMPT_PREVIEW_LEN = 280;
 
+// Wraps EventCard so AnimatePresence can play an enter animation on
+// freshly polled rows. initial={false} on the parent skips the first
+// render — that's why initialEvents don't animate, only the live
+// arrivals do.
+function FreshEvent({ event }: { event: EventDTO }) {
+  const reduce = useReducedMotion();
+  return (
+    <motion.li
+      layout
+      initial={
+        reduce
+          ? false
+          : { opacity: 0, y: -8, filter: "blur(4px)" }
+      }
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      exit={
+        reduce
+          ? undefined
+          : { opacity: 0, y: -4, transition: { duration: 0.2 } }
+      }
+      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <EventCard event={event} />
+    </motion.li>
+  );
+}
+
 function EventCard({ event: e }: { event: EventDTO }) {
   const [expanded, setExpanded] = useState(false);
   const headline = summarizeHits(e.action, e.policyHits);
@@ -126,7 +171,7 @@ function EventCard({ event: e }: { event: EventDTO }) {
   const promptTruncatable = e.prompt.length > PROMPT_PREVIEW_LEN;
 
   return (
-    <li
+    <div
       className="border border-graphite-dark/15 bg-paper p-4"
       style={{ borderRadius: "var(--radius)" }}
     >
@@ -178,7 +223,7 @@ function EventCard({ event: e }: { event: EventDTO }) {
           </button>
         )}
       </div>
-    </li>
+    </div>
   );
 }
 
@@ -233,23 +278,36 @@ function FilterChip({
   active,
   onClick,
   label,
+  ratio,
 }: {
   active: boolean;
   onClick: () => void;
   label: string;
+  /** Optional 0..1 ratio that renders as a thin bar under the label,
+   *  scaled against the busiest action in the current window. */
+  ratio?: number;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider transition-colors ${
+      className={`relative overflow-hidden px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider transition-colors ${
         active
           ? "bg-ink text-paper"
           : "border border-graphite-dark/25 text-graphite hover:border-ink hover:text-ink"
       }`}
       style={{ borderRadius: "var(--radius)" }}
     >
-      {label}
+      <span className="relative z-10">{label}</span>
+      {ratio !== undefined && ratio > 0 ? (
+        <span
+          aria-hidden
+          className={`absolute inset-x-0 bottom-0 h-0.5 origin-left ${
+            active ? "bg-paper/60" : "bg-ink/40"
+          } transition-transform`}
+          style={{ transform: `scaleX(${Math.max(0, Math.min(1, ratio))})` }}
+        />
+      ) : null}
     </button>
   );
 }
