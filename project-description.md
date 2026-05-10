@@ -2,7 +2,7 @@
 
 > *Un paso controlado entre la intención y la respuesta.*
 
-**Track**: AI Safety — Platanus Hack 26 · Buenos Aires · Team 22
+**Track**: AI Security — Platanus Hack 26 · Buenos Aires · Team 22
 
 ---
 

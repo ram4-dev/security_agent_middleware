@@ -8,7 +8,7 @@
 
 **Tranquera** resuelve el problema de **alineamiento organizacional de agentes AI**: Claude Code está alineado con los valores de Anthropic, pero no con las políticas de la empresa que lo despliega. Tranquera es la capa intermedia que cierra esa brecha — un proxy modificable que aplica reglas no-code en runtime con una cascada **Regex → Pattern → Haiku judge** de menos de 200 ms de overhead, con cuatro acciones explícitas: `BLOCK · REDACT · WARN · LOG`. El compliance officer (no técnico) especifica las políticas en lenguaje natural con un visual builder; el dev usa Claude Code igual que siempre; un AI Suggestor cierra el loop proponiendo nuevas reglas a partir de los patrones que están pasando bajo el radar.
 
-— Track **AI Safety** · Platanus Hack 26 · Buenos Aires · Team 22.
+— Track **AI Security** · Platanus Hack 26 · Buenos Aires · Team 22.
 
 ---
 
