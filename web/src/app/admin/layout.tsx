@@ -4,8 +4,10 @@
 import Link from "next/link";
 import { isAuthConfigured, signOut } from "@/auth";
 import { ensureAdminSession } from "@/lib/admin-session";
+import { readThemeCookie } from "@/lib/theme";
 import { TranqueraMark } from "@/components/brand/tranquera-mark";
 import { AdminNav } from "./_components/nav";
+import { ThemeSwitcher } from "./_components/theme-switcher";
 
 export default async function AdminLayout({
   children,
@@ -27,6 +29,7 @@ export default async function AdminLayout({
 
   const email = session.email;
   const orgId = session.orgId;
+  const theme = await readThemeCookie();
 
   // Dev no debería estar acá: el back-office es solo-admin. Mostramos un
   // mensaje claro en vez de la UI de admin (que confunde y no se puede usar).
@@ -35,7 +38,7 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-paper text-ink">
+    <div data-admin-shell data-theme={theme} className="min-h-screen bg-paper text-ink">
       <header className="sticky top-0 z-30 border-b border-graphite-dark/15 bg-paper/85 backdrop-blur supports-[backdrop-filter]:bg-paper/70">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-3">
@@ -56,9 +59,10 @@ export default async function AdminLayout({
       </header>
 
       <div className="mx-auto flex max-w-6xl gap-8 px-6 py-10 md:py-14">
-        <aside className="w-44 shrink-0">
+        <aside className="flex w-44 shrink-0 flex-col gap-10">
           <AdminNav />
-          <p className="mt-10 font-mono text-[11px] leading-relaxed text-graphite">
+          <ThemeSwitcher initial={theme} />
+          <p className="mt-auto font-mono text-[11px] leading-relaxed text-graphite">
             // org · {orgId}
             <br />
             // {isAuthConfigured() ? "google session" : "demo session"}

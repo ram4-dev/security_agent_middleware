@@ -13,6 +13,26 @@
   --radius: 2px;
 }
 
+/* Theme variants per identidad/design.md § 2 ("Variantes de tema"). The
+ * three modes are named after writing tools: beam = max-contrast (paper
+ * + black), ink = default warm contrast (paper + ink), paper = dark
+ * monitor mode (ink + paper). They redefine the same tokens so existing
+ * `bg-paper`, `text-ink`, `border-graphite-dark/20` etc. compose without
+ * any per-component refactor. Scope to a wrapper element via
+ * `data-theme="…"` to opt in (the public landing stays default ink). */
+[data-theme="beam"] {
+  --color-ink: #000000;
+  --color-graphite-dark: #2a2925;
+}
+
+[data-theme="paper"] {
+  --color-paper: #1c1b18;
+  --color-paper-soft: #2a2925;
+  --color-ink: #efede6;
+  --color-graphite: #a3a097;
+  --color-graphite-dark: #d4d0c5;
+}
+
 html,
 body {
   background: var(--color-paper);
