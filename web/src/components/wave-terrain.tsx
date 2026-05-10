@@ -12,6 +12,13 @@ const MAX_OFFSET = 7;
 const LERP = 0.12;
 const SETTLE_EPSILON = 0.05;
 
+// Ambient drift — the grid breathes on its own when the cursor is gone, so
+// the hero never reads as static. Tuned to be barely perceptible.
+const AMBIENT_AMP = 1.6; // pixels
+const AMBIENT_FREQ_X = 0.0042;
+const AMBIENT_FREQ_Y = 0.0058;
+const AMBIENT_SPEED = 0.00045; // radians per ms
+
 export function WaveTerrain({ className = "" }: { className?: string }) {
   const ref = useRef<SVGSVGElement | null>(null);
 
@@ -64,13 +71,21 @@ export function WaveTerrain({ className = "" }: { className?: string }) {
     let mouse: { x: number; y: number } | null = null;
     let raf = 0;
 
-    const draw = () => {
-      let stillMoving = false;
+    const draw = (now: number) => {
+      const t = now * AMBIENT_SPEED;
       for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
           const p = grid[r][c];
-          let tx = p.bx;
-          let ty = p.by;
+          // Ambient breathing — every node drifts on a slow sine field.
+          // Skipped under reduce-motion via the early-return below.
+          const ax = reduce.matches
+            ? 0
+            : Math.sin(p.bx * AMBIENT_FREQ_X + t) * AMBIENT_AMP;
+          const ay = reduce.matches
+            ? 0
+            : Math.cos(p.by * AMBIENT_FREQ_Y + t * 0.85) * AMBIENT_AMP;
+          let tx = p.bx + ax;
+          let ty = p.by + ay;
           if (mouse) {
             const dxm = p.bx - mouse.x;
             const dym = p.by - mouse.y;
@@ -79,17 +94,12 @@ export function WaveTerrain({ className = "" }: { className?: string }) {
               const influence = 1 - dist / INFLUENCE_RADIUS;
               const fall = influence * influence;
               const norm = 1 / dist;
-              tx = p.bx + dxm * norm * MAX_OFFSET * fall;
-              ty = p.by + dym * norm * MAX_OFFSET * fall;
+              tx += dxm * norm * MAX_OFFSET * fall;
+              ty += dym * norm * MAX_OFFSET * fall;
             }
           }
-          const ddx = tx - p.cx;
-          const ddy = ty - p.cy;
-          if (Math.abs(ddx) > SETTLE_EPSILON || Math.abs(ddy) > SETTLE_EPSILON) {
-            stillMoving = true;
-          }
-          p.cx += ddx * LERP;
-          p.cy += ddy * LERP;
+          p.cx += (tx - p.cx) * LERP;
+          p.cy += (ty - p.cy) * LERP;
         }
       }
 
@@ -113,11 +123,8 @@ export function WaveTerrain({ className = "" }: { className?: string }) {
         raf = 0;
         return;
       }
-      if (stillMoving || mouse) {
-        raf = requestAnimationFrame(draw);
-      } else {
-        raf = 0;
-      }
+      // Ambient drift means we always keep ticking when motion is allowed.
+      raf = requestAnimationFrame(draw);
     };
 
     const ensureRunning = () => {
@@ -148,7 +155,8 @@ export function WaveTerrain({ className = "" }: { className?: string }) {
       }
     };
 
-    raf = requestAnimationFrame(draw);
+    if (!reduce.matches) raf = requestAnimationFrame(draw);
+    else draw(0); // single static paint for reduce-motion users
     window.addEventListener("pointermove", onMove, { passive: true });
     window.addEventListener("pointerleave", onLeave);
     document.addEventListener("mouseleave", onLeave);

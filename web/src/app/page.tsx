@@ -2,7 +2,7 @@
 // identidad/design.md § 3, "Comments tipo código"), not stray JS comments.
 /* eslint-disable react/jsx-no-comment-textnodes */
 import Link from "next/link";
-import { WaveTerrain } from "@/components/wave-terrain";
+import { Hero } from "./_components/hero";
 import { SiteHeader, Wordmark } from "./_components/site-header";
 
 const TEAM = [
@@ -36,89 +36,6 @@ export default function HomePage() {
 }
 
 // ---------------------------------------------------------------------------
-// Hero
-// ---------------------------------------------------------------------------
-
-function Hero() {
-  return (
-    <section className="relative isolate w-full overflow-hidden bg-ink text-paper">
-      <HeroBackdrop />
-      <div className="relative mx-auto max-w-6xl px-6 pb-28 pt-16 md:pb-44 md:pt-24">
-        {/* Top meta bar: caption (left) + live status (right). */}
-        <div className="rise mb-20 flex flex-wrap items-start justify-between gap-4 md:mb-28">
-          <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-paper/55">
-            <span aria-hidden className="mr-2 text-paper">
-              +
-            </span>
-            tranquera · devs · organización · alineación
-          </span>
-          <span className="hidden items-center gap-2 font-mono text-[11px] uppercase tracking-[0.22em] text-paper/55 md:inline-flex">
-            <span
-              aria-hidden
-              className="hero-dot block h-1.5 w-1.5 rounded-full bg-paper"
-            />
-            sistema · v1.0 · live
-          </span>
-        </div>
-
-        {/* Display headline: wordmark + canonical short tagline, large and
-            tight — adapted from FOXTROVE's display rhythm. */}
-        <div className="rise" style={{ animationDelay: "120ms" }}>
-          <h1 className="text-[clamp(3.5rem,15vw,10.5rem)] font-semibold lowercase leading-[0.92] tracking-[-0.045em] text-paper">
-            tranquera.
-          </h1>
-          <p className="mt-3 text-3xl font-medium leading-[1.05] tracking-[-0.02em] text-paper/75 md:mt-5 md:text-6xl">
-            un paso controlado.
-          </p>
-        </div>
-
-        {/* Subheadline carries the B2B promise. */}
-        <p
-          className="rise mt-10 max-w-2xl text-lg leading-relaxed text-paper/80 md:text-xl"
-          style={{ animationDelay: "240ms" }}
-        >
-          La capa de alineamiento entre tu equipo y Claude Code. Los LLMs no
-          tienen contexto organizacional por defecto — con Tranquera, siempre lo
-          tienen.
-        </p>
-
-        {/* CTAs */}
-        <div
-          className="rise mt-10 flex flex-wrap items-center gap-4"
-          style={{ animationDelay: "360ms" }}
-        >
-          <Link
-            href="/admin/login"
-            className="inline-flex items-center justify-center bg-paper px-7 py-3.5 font-medium text-ink transition-colors hover:bg-paper-soft"
-            style={{ borderRadius: "var(--radius)" }}
-          >
-            Entrar al admin →
-          </Link>
-          <Link
-            href={REPO_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center border border-paper px-7 py-3.5 font-medium text-paper transition-colors hover:bg-paper hover:text-ink"
-            style={{ borderRadius: "var(--radius)" }}
-          >
-            Ver en GitHub
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// Paper-on-ink wireframe that fills the hero. The grid is flat by default
-// and only ripples around the cursor — see WaveTerrain for the math.
-function HeroBackdrop() {
-  return (
-    <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden bg-ink">
-      <WaveTerrain className="absolute inset-0 h-full w-full text-paper" />
-    </div>
-  );
-}
-
 // Demo cell shown right after the hero — a sample request running through
 // the cascade and exiting as a verdict pill. Lives on paper so it reads as
 // a fragment of log lifted out of the dark hero.

@@ -3,9 +3,13 @@
 /* eslint-disable react/jsx-no-comment-textnodes */
 
 import Image from "next/image";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, isAuthConfigured, signIn } from "@/auth";
 import { SiteHeader } from "@/app/_components/site-header";
+import { GridBackdrop } from "@/app/_components/grid-backdrop";
+
+const REPO_URL = "https://github.com/platanus-hack/platanus-hack-26-ar-team-22";
 
 // Solo permitimos callbackUrls que sean rutas internas. Si alguien intenta
 // `?callbackUrl=https://malicio.us` lo descartamos y caemos al default.
@@ -33,59 +37,103 @@ export default async function LoginPage({
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-paper text-ink">
+    <div className="relative isolate flex min-h-svh flex-col bg-paper text-ink">
       <SiteHeader />
-      <main className="grid w-full flex-1 place-items-center px-6 py-6">
-        <div className="w-full max-w-md">
+
+      <main className="relative grid w-full flex-1 place-items-center px-6 py-10">
+        <GridBackdrop variant="paper" />
+
+        <div className="relative w-full max-w-lg">
+          {/* meta bar — mismo lenguaje que el hero, en negativo. */}
+          <div className="rise mb-8 flex flex-wrap items-baseline justify-between gap-3">
+            <span className="font-mono text-[11px] uppercase tracking-[0.28em] text-graphite">
+              <span aria-hidden className="mr-2 text-ink">
+                +
+              </span>
+              sys.online // op.ready
+            </span>
+            <span className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.28em] text-graphite">
+              <span
+                aria-hidden
+                className="hero-dot block h-1.5 w-1.5 rounded-full bg-ink"
+              />
+              admin · login
+            </span>
+          </div>
+
           <div
-            className="flex w-full flex-col gap-6 border border-graphite-dark/20 bg-paper p-8 md:p-10"
-            style={{ borderRadius: "var(--radius)" }}
+            className="rise flex w-full flex-col gap-7 border border-graphite-dark/20 bg-paper/85 p-8 shadow-[0_30px_80px_-50px_rgba(28,27,24,0.45)] backdrop-blur-sm md:p-10"
+            style={{ animationDelay: "120ms", borderRadius: "var(--radius)" }}
           >
-          <div className="flex items-center gap-3">
-            <TranqueraMark className="h-7 w-7" />
-            <span className="text-xl font-semibold lowercase tracking-tight">
-              tranquera
-            </span>
-            <span className="ml-2 border-l border-graphite-dark/20 pl-3 font-mono text-xs uppercase tracking-wider text-graphite">
-              admin
-            </span>
-          </div>
+            <div className="flex items-center gap-3">
+              <TranqueraMark className="h-7 w-7" />
+              <span className="text-xl font-semibold lowercase tracking-tight">
+                tranquera
+              </span>
+              <span className="ml-2 border-l border-graphite-dark/20 pl-3 font-mono text-xs uppercase tracking-wider text-graphite">
+                admin
+              </span>
+            </div>
 
-          <div className="flex flex-col gap-2">
-            <span className="font-mono text-xs uppercase tracking-wider text-graphite">
-              // ingresá
-            </span>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Iniciá sesión.
-            </h1>
-            <p className="text-sm leading-relaxed text-graphite-dark">
-              Continuá con Google. Si te invitaron, entrás a la org de tu
-              equipo. Si todavía no estás invitado, creás una nueva como
-              admin owner.
-            </p>
-          </div>
+            <div className="flex flex-col gap-3">
+              <span className="font-mono text-xs uppercase tracking-wider text-graphite">
+                // ingresá
+              </span>
+              <h1 className="text-3xl font-semibold leading-[1.05] tracking-tight md:text-4xl">
+                iniciá sesión.
+              </h1>
+              <p className="max-w-sm text-sm leading-relaxed text-graphite-dark">
+                Continuá con Google. Si te invitaron, entrás a la org de tu
+                equipo. Si todavía no estás invitado, creás una nueva como
+                admin owner.
+              </p>
+            </div>
 
-          <form
-            action={async () => {
-              "use server";
-              await signIn("google", { redirectTo: callbackUrl });
-            }}
-          >
-            <button
-              type="submit"
-              className="flex w-full items-center justify-center gap-3 bg-ink px-6 py-3.5 font-medium text-paper transition-colors hover:bg-graphite-dark"
-              style={{ borderRadius: "var(--radius)" }}
+            <form
+              action={async () => {
+                "use server";
+                await signIn("google", { redirectTo: callbackUrl });
+              }}
             >
-              <GoogleMark className="h-5 w-5" />
-              Continuar con Google
-            </button>
-          </form>
+              <button
+                type="submit"
+                className="group flex w-full items-center justify-center gap-3 bg-ink px-6 py-3.5 font-medium text-paper transition-colors hover:bg-graphite-dark"
+                style={{ borderRadius: "var(--radius)" }}
+              >
+                <GoogleMark className="h-5 w-5" />
+                Continuar con Google
+                <span
+                  aria-hidden
+                  className="ml-1 transition-transform duration-300 group-hover:translate-x-1"
+                >
+                  →
+                </span>
+              </button>
+            </form>
 
             <p className="font-mono text-[11px] leading-relaxed text-graphite">
               // sólo loggeamos email, nombre y avatar.
               <br />
               // sin tracking, sin tokens de gmail.
             </p>
+          </div>
+
+          {/* footer del login — vínculos calmos al landing y al repo. */}
+          <div
+            className="rise mt-6 flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.22em] text-graphite"
+            style={{ animationDelay: "240ms" }}
+          >
+            <Link href="/" className="transition-colors hover:text-ink">
+              ← volver al inicio
+            </Link>
+            <Link
+              href={REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition-colors hover:text-ink"
+            >
+              github →
+            </Link>
           </div>
         </div>
       </main>
