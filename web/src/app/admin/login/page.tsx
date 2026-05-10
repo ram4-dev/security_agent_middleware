@@ -5,6 +5,7 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { auth, isAuthConfigured, signIn } from "@/auth";
+import { SiteHeader } from "@/app/_components/site-header";
 
 // Solo permitimos callbackUrls que sean rutas internas. Si alguien intenta
 // `?callbackUrl=https://malicio.us` lo descartamos y caemos al default.
@@ -32,12 +33,14 @@ export default async function LoginPage({
   }
 
   return (
-    <div className="min-h-screen bg-paper text-ink">
-      <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 py-16">
-        <div
-          className="flex w-full flex-col gap-8 border border-graphite-dark/20 bg-paper p-8 md:p-10"
-          style={{ borderRadius: "var(--radius)" }}
-        >
+    <div className="flex min-h-screen flex-col bg-paper text-ink">
+      <SiteHeader />
+      <main className="grid w-full flex-1 place-items-center px-6 py-6">
+        <div className="w-full max-w-md">
+          <div
+            className="flex w-full flex-col gap-6 border border-graphite-dark/20 bg-paper p-8 md:p-10"
+            style={{ borderRadius: "var(--radius)" }}
+          >
           <div className="flex items-center gap-3">
             <TranqueraMark className="h-7 w-7" />
             <span className="text-xl font-semibold lowercase tracking-tight">
@@ -77,11 +80,12 @@ export default async function LoginPage({
             </button>
           </form>
 
-          <p className="font-mono text-[11px] leading-relaxed text-graphite">
-            // sólo loggeamos email, nombre y avatar.
-            <br />
-            // sin tracking, sin tokens de gmail.
-          </p>
+            <p className="font-mono text-[11px] leading-relaxed text-graphite">
+              // sólo loggeamos email, nombre y avatar.
+              <br />
+              // sin tracking, sin tokens de gmail.
+            </p>
+          </div>
         </div>
       </main>
     </div>

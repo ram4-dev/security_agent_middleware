@@ -16,12 +16,21 @@ export default async function AdminLayout({
   // primer hit a cualquier ruta /admin/*. Es el reemplazo de la rama de
   // auto-create que sacamos de resolveOrgForUser.
   const session = await ensureAdminSession();
-  const email = session?.email ?? "—";
-  const orgId = session?.orgId ?? "—";
+
+  // Sin sesión solo se llega acá vía /admin/login (proxy.ts gatea el resto).
+  // Renderizamos children pelado para que la página de login no herede el
+  // sidebar/header del admin con opciones a las que el visitante todavía no
+  // puede entrar.
+  if (!session) {
+    return <>{children}</>;
+  }
+
+  const email = session.email;
+  const orgId = session.orgId;
 
   // Dev no debería estar acá: el back-office es solo-admin. Mostramos un
   // mensaje claro en vez de la UI de admin (que confunde y no se puede usar).
-  if (session?.role === "dev") {
+  if (session.role === "dev") {
     return <DevForbidden email={email} orgId={orgId} />;
   }
 
