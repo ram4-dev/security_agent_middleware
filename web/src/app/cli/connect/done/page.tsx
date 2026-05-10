@@ -10,7 +10,8 @@ export default function CliConnectDonePage() {
           className="flex w-full flex-col gap-6 border border-graphite-dark/20 bg-paper p-8 md:p-10"
           style={{ borderRadius: "var(--radius)" }}
         >
-          <span className="font-mono text-xs uppercase tracking-wider text-emerald-700">
+          <span className="inline-flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-wider text-ink">
+            <span aria-hidden className="h-3 w-1 bg-ink" />
             // ok
           </span>
           <h1 className="text-2xl font-semibold tracking-tight">

@@ -221,7 +221,10 @@ export function RulesPanel({ initialRules }: { initialRules: RuleDTO[] }) {
             </select>
           </Field>
           {error ? (
-            <p className="font-mono text-xs text-red-600 md:col-span-2">// {error}</p>
+            <p className="inline-flex items-center gap-2 font-mono text-xs font-semibold text-ink md:col-span-2">
+              <span aria-hidden className="h-3 w-1 bg-ink" />
+              // error · {error}
+            </p>
           ) : null}
           <div className="flex items-center gap-3 md:col-span-2">
             <button
@@ -300,7 +303,7 @@ export function RulesPanel({ initialRules }: { initialRules: RuleDTO[] }) {
                     <button
                       type="button"
                       onClick={() => handleDelete(r)}
-                      className="font-mono text-[11px] uppercase tracking-wider text-graphite transition-colors hover:text-red-600"
+                      className="font-mono text-[11px] uppercase tracking-wider text-graphite transition-colors hover:font-semibold hover:text-ink"
                     >
                       borrar
                     </button>
@@ -339,19 +342,26 @@ function Field({
   );
 }
 
+// Monochrome ActionTag — severity reads as text weight + a 4px left bar
+// that darkens with severity. Functional color is reserved for the live
+// events feed (see identidad/design.md § 6).
 function ActionTag({ action }: { action: RuleDTO["defaultAction"] }) {
-  const styles: Record<RuleDTO["defaultAction"], string> = {
-    BLOCK: "bg-red-500/10 text-red-700",
-    REDACT: "bg-amber-500/10 text-amber-700",
-    WARN: "bg-orange-500/10 text-orange-700",
-    LOG: "bg-zinc-500/10 text-zinc-700",
+  const weight: Record<RuleDTO["defaultAction"], string> = {
+    LOG: "font-normal",
+    WARN: "font-medium",
+    REDACT: "font-semibold",
+    BLOCK: "font-bold",
+  };
+  const indicator: Record<RuleDTO["defaultAction"], string> = {
+    LOG: "bg-graphite",
+    WARN: "bg-graphite-dark",
+    REDACT: "bg-ink/80",
+    BLOCK: "bg-ink",
   };
   return (
-    <span
-      className={`inline-flex items-center px-2 py-1 font-mono text-[11px] font-semibold uppercase tracking-wider ${styles[action]}`}
-      style={{ borderRadius: "var(--radius)" }}
-    >
-      {action}
+    <span className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-ink">
+      <span aria-hidden className={`h-3.5 w-1 ${indicator[action]}`} />
+      <span className={weight[action]}>{action}</span>
     </span>
   );
 }

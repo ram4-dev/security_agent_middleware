@@ -172,7 +172,8 @@ function Shell({ children }: { children: React.ReactNode }) {
 function ErrorScreen({ title, body }: { title: string; body: string }) {
   return (
     <Shell>
-      <span className="font-mono text-xs uppercase tracking-wider text-red-600">
+      <span className="inline-flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-wider text-ink">
+        <span aria-hidden className="h-3 w-1 bg-ink" />
         // error
       </span>
       <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>

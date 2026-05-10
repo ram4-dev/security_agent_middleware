@@ -29,11 +29,19 @@ const SEVERITY_LABELS: Record<string, string> = {
   high: "alta",
 };
 
-const ACTION_STYLES: Record<string, string> = {
-  BLOCK: "bg-red-500/10 text-red-700",
-  REDACT: "bg-amber-500/10 text-amber-700",
-  WARN: "bg-orange-500/10 text-orange-700",
-  LOG: "bg-zinc-500/10 text-zinc-700",
+// Severity reads as text weight + a 4px left bar that darkens with severity,
+// matching identidad/design.md § 6. Color is reserved for `/admin/events`.
+const ACTION_WEIGHT: Record<string, string> = {
+  LOG: "font-normal",
+  WARN: "font-medium",
+  REDACT: "font-semibold",
+  BLOCK: "font-bold",
+};
+const ACTION_INDICATOR: Record<string, string> = {
+  LOG: "bg-graphite",
+  WARN: "bg-graphite-dark",
+  REDACT: "bg-ink/80",
+  BLOCK: "bg-ink",
 };
 
 type SuggestorRunResult = {
@@ -134,14 +142,24 @@ export function SuggestionsPanel({
 
         {runResult && (
           <span
-            className={`font-mono text-xs ${
+            className={`inline-flex items-center gap-2 font-mono text-xs ${
               runResult.ok && (runResult.inserted ?? 0) > 0
-                ? "text-emerald-700"
+                ? "font-semibold text-ink"
                 : runResult.ok
                   ? "text-graphite"
-                  : "text-red-700"
+                  : "font-semibold text-ink"
             }`}
           >
+            <span
+              aria-hidden
+              className={`h-3 w-1 ${
+                runResult.ok && (runResult.inserted ?? 0) > 0
+                  ? "bg-ink"
+                  : runResult.ok
+                    ? "bg-graphite"
+                    : "bg-ink"
+              }`}
+            />
             {runResult.ok
               ? (runResult.inserted ?? 0) > 0
                 ? `// ${runResult.inserted} nuevas sugerencias generadas`
@@ -213,11 +231,14 @@ function SuggestionCard({
           </span>
         )}
 
-        <span
-          className={`inline-flex items-center px-2 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-wider ${ACTION_STYLES[s.proposedAction] ?? ""}`}
-          style={{ borderRadius: "var(--radius)" }}
-        >
-          {s.proposedAction}
+        <span className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-ink">
+          <span
+            aria-hidden
+            className={`h-3.5 w-1 ${ACTION_INDICATOR[s.proposedAction] ?? "bg-graphite"}`}
+          />
+          <span className={ACTION_WEIGHT[s.proposedAction] ?? "font-normal"}>
+            {s.proposedAction}
+          </span>
         </span>
 
         <span className="ml-auto font-mono text-[11px] uppercase tracking-wider text-graphite">

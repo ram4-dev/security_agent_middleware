@@ -81,7 +81,10 @@ export function GdocImportForm() {
       </form>
 
       {error && (
-        <p className="font-mono text-xs text-red-600">// {error}</p>
+        <p className="inline-flex items-center gap-2 font-mono text-xs font-semibold text-ink">
+          <span aria-hidden className="h-3 w-1 bg-ink" />
+          // error · {error}
+        </p>
       )}
 
       {result && (

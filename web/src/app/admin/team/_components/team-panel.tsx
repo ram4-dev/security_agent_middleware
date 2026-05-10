@@ -142,7 +142,10 @@ export function TeamPanel({
           </button>
         </div>
         {error ? (
-          <p className="font-mono text-xs text-red-600">// {error}</p>
+          <p className="inline-flex items-center gap-2 font-mono text-xs font-semibold text-ink">
+            <span aria-hidden className="h-3 w-1 bg-ink" />
+            // error · {error}
+          </p>
         ) : null}
         <p className="font-mono text-[11px] leading-relaxed text-graphite">
           // el dev queda &quot;pendiente&quot; hasta que loguee por primera vez.
@@ -230,7 +233,7 @@ function MemberList({
                     <button
                       type="button"
                       onClick={() => onRemove(m)}
-                      className="font-mono text-[11px] uppercase tracking-wider text-graphite transition-colors hover:text-red-600"
+                      className="font-mono text-[11px] uppercase tracking-wider text-graphite transition-colors hover:font-semibold hover:text-ink"
                     >
                       remover
                     </button>
@@ -245,12 +248,15 @@ function MemberList({
   );
 }
 
+// Monochrome status: filled square = active, hollow square = pending.
+// Keeps the admin shell within the brand palette per identidad/design.md § 6.
 function StatusDot({ active }: { active: boolean }) {
   return (
     <span
       aria-hidden
-      className={`inline-block h-1.5 w-1.5 rounded-full ${
-        active ? "bg-emerald-500" : "bg-graphite/40"
+      title={active ? "active" : "pending"}
+      className={`inline-block h-2 w-2 ${
+        active ? "bg-ink" : "border border-graphite-dark/40"
       }`}
     />
   );
@@ -297,7 +303,7 @@ function CliInviteCard({
             {orgId}
           </button>
           {copied === "org" ? (
-            <span className="ml-2 text-emerald-600">copiado ✓</span>
+            <span className="ml-2 font-semibold text-ink">copiado ✓</span>
           ) : null}
         </span>
       </div>

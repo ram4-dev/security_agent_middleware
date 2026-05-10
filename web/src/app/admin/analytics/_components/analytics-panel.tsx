@@ -26,11 +26,13 @@ const RANGE_LABELS: Record<Range, string> = {
   "30d": "últimos 30 días",
 };
 
+// Severity reads as bar weight + text weight, matching identidad/design.md
+// § 6. Functional color is reserved for `/admin/events` (live monitoring).
 const ACTION_STYLES: Record<string, { bar: string; text: string }> = {
-  BLOCK:  { bar: "bg-red-600/80",    text: "text-red-700" },
-  REDACT: { bar: "bg-amber-500/80",  text: "text-amber-700" },
-  WARN:   { bar: "bg-orange-400/80", text: "text-orange-700" },
-  LOG:    { bar: "bg-zinc-400/80",   text: "text-zinc-600" },
+  BLOCK:  { bar: "bg-ink",            text: "font-bold text-ink" },
+  REDACT: { bar: "bg-ink/75",         text: "font-semibold text-ink" },
+  WARN:   { bar: "bg-graphite-dark",  text: "font-medium text-ink" },
+  LOG:    { bar: "bg-graphite",       text: "text-ink" },
 };
 
 type AlignmentLevel = "alto" | "moderado" | "bajo" | "crítico";
@@ -42,11 +44,14 @@ function getAlignmentLevel(score: number): AlignmentLevel {
   return "crítico";
 }
 
-const ALIGNMENT_META: Record<AlignmentLevel, { label: string; description: string; color: string }> = {
-  alto:     { label: "alineamiento alto",     description: "Los devs operan dentro de las políticas de la organización.",         color: "text-ink" },
-  moderado: { label: "alineamiento moderado", description: "Hay margen de mejora — revisá las políticas más activadas.",          color: "text-ink" },
-  bajo:     { label: "alineamiento bajo",     description: "Un porcentaje significativo de requests está siendo bloqueado.",       color: "text-red-700" },
-  crítico:  { label: "atención requerida",    description: "Más de la mitad de los requests no pasan las políticas vigentes.",    color: "text-red-700" },
+const ALIGNMENT_META: Record<
+  AlignmentLevel,
+  { label: string; description: string; weight: string }
+> = {
+  alto:     { label: "alineamiento alto",     description: "Los devs operan dentro de las políticas de la organización.",         weight: "font-medium" },
+  moderado: { label: "alineamiento moderado", description: "Hay margen de mejora — revisá las políticas más activadas.",          weight: "font-semibold" },
+  bajo:     { label: "alineamiento bajo",     description: "Un porcentaje significativo de requests está siendo bloqueado.",       weight: "font-bold" },
+  crítico:  { label: "atención requerida",    description: "Más de la mitad de los requests no pasan las políticas vigentes.",    weight: "font-bold" },
 };
 
 export function AnalyticsPanel({ initial }: { initial: AnalyticsData }) {
@@ -107,12 +112,15 @@ export function AnalyticsPanel({ initial }: { initial: AnalyticsData }) {
         {alignmentScore !== null && meta ? (
           <div className="flex flex-col gap-5">
             <div className="flex flex-wrap items-end justify-between gap-4">
-              <span className={`text-7xl font-semibold leading-none tracking-tighter sm:text-8xl ${meta.color}`}>
+              <span className="text-6xl font-semibold leading-none tracking-tighter text-ink sm:text-7xl md:text-8xl">
                 {alignmentScore.toFixed(1)}
-                <span className="text-4xl sm:text-5xl">%</span>
+                <span className="text-3xl sm:text-4xl md:text-5xl">%</span>
               </span>
               <div className="flex flex-col gap-1 pb-1">
-                <span className={`font-mono text-xs uppercase tracking-widest ${meta.color}`}>
+                <span
+                  className={`inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-ink ${meta.weight}`}
+                >
+                  <span aria-hidden className={`h-3 w-1 ${level === "alto" ? "bg-graphite" : level === "moderado" ? "bg-graphite-dark" : level === "bajo" ? "bg-ink/75" : "bg-ink"}`} />
                   {meta.label}
                 </span>
                 <span className="max-w-xs font-mono text-[11px] text-graphite">
