@@ -7,9 +7,18 @@ import { getAdminSession } from "@/lib/admin-session";
 import { toEventDTO } from "@/lib/events";
 import { prisma } from "@/lib/prisma";
 
-import { ActionPill, type Action } from "@/components/ui";
+import { type Action } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
+
+// Same functional palette as analytics + events feed — keeps the
+// compliance officer's mental model coherent across surfaces.
+const ACTION_TONE: Record<Action, { tile: string; pill: string }> = {
+  BLOCK:  { tile: "text-red-700",    pill: "bg-red-500/10 text-red-700" },
+  REDACT: { tile: "text-amber-700",  pill: "bg-amber-500/10 text-amber-700" },
+  WARN:   { tile: "text-orange-700", pill: "bg-orange-500/10 text-orange-700" },
+  LOG:    { tile: "text-zinc-600",   pill: "bg-zinc-500/10 text-zinc-700" },
+};
 
 export default async function AdminHomePage() {
   const session = await getAdminSession();
@@ -17,6 +26,9 @@ export default async function AdminHomePage() {
   const { orgId } = session;
   const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
+  // Each query is wrapped so a single failure can't take down the whole
+  // dashboard — the surface degrades gracefully and the user still sees
+  // a useful page.
   const [
     byAction,
     aggregate,
@@ -27,32 +39,46 @@ export default async function AdminHomePage() {
     pendingMembersCount,
     activeMembersCount,
   ] = await Promise.all([
-    prisma.interaction.groupBy({
-      by: ["action"],
-      where: { orgId, createdAt: { gte: since24h } },
-      _count: { action: true },
-    }),
-    prisma.interaction.aggregate({
-      where: { orgId, createdAt: { gte: since24h } },
-      _avg: { latencyTotalMs: true },
-      _count: { id: true },
-    }),
-    prisma.interaction.findMany({
-      where: { orgId },
-      orderBy: { createdAt: "desc" },
-      take: 5,
-    }),
-    prisma.ruleSuggestion.count({ where: { orgId, status: "pending" } }),
-    prisma.policy.count({ where: { orgId, isActive: true } }),
-    prisma.policy.count({ where: { orgId } }),
-    prisma.member.count({ where: { orgId, role: "dev", userId: null } }),
-    prisma.member.count({
-      where: { orgId, role: "dev", userId: { not: null } },
-    }),
+    prisma.interaction
+      .groupBy({
+        by: ["action"],
+        where: { orgId, createdAt: { gte: since24h } },
+        _count: { action: true },
+      })
+      .catch(() => [] as { action: string; _count: { action: number } }[]),
+    prisma.interaction
+      .aggregate({
+        where: { orgId, createdAt: { gte: since24h } },
+        _avg: { latencyTotalMs: true },
+        _count: { id: true },
+      })
+      .catch(() => ({
+        _avg: { latencyTotalMs: 0 },
+        _count: { id: 0 },
+      }) as { _avg: { latencyTotalMs: number | null }; _count: { id: number } }),
+    prisma.interaction
+      .findMany({
+        where: { orgId },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      })
+      .catch(() => []),
+    prisma.ruleSuggestion
+      .count({ where: { orgId, status: "pending" } })
+      .catch(() => 0),
+    prisma.policy.count({ where: { orgId, isActive: true } }).catch(() => 0),
+    prisma.policy.count({ where: { orgId } }).catch(() => 0),
+    prisma.member
+      .count({ where: { orgId, role: "dev", userId: null } })
+      .catch(() => 0),
+    prisma.member
+      .count({ where: { orgId, role: "dev", userId: { not: null } } })
+      .catch(() => 0),
   ]);
 
   const byActionMap: Record<string, number> = {};
-  for (const row of byAction) byActionMap[row.action] = row._count.action;
+  for (const row of byAction)
+    byActionMap[row.action as string] = row._count.action;
   const total = Number(aggregate._count.id);
   const blocked = byActionMap.BLOCK ?? 0;
   const redacted = byActionMap.REDACT ?? 0;
@@ -63,29 +89,34 @@ export default async function AdminHomePage() {
   const events = recentRows.map(toEventDTO);
 
   return (
-    <section className="flex flex-col gap-10">
+    <section className="flex flex-col gap-6 md:gap-8">
       <header className="flex flex-col gap-2">
         <span className="font-mono text-xs uppercase tracking-wider text-graphite">
           // inicio · últimas 24 h
         </span>
-        <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
           ¿Estamos alineados ahora?
         </h1>
-        <p className="max-w-2xl text-graphite-dark">
+        <p className="max-w-2xl text-sm text-graphite-dark md:text-base">
           {greetingFor(score, total)}
         </p>
       </header>
 
-      <AlignmentHero score={score} total={total} aligned={aligned} blocked={blocked} />
+      <AlignmentHero
+        score={score}
+        total={total}
+        aligned={aligned}
+        blocked={blocked}
+      />
 
       <div className="grid gap-px overflow-hidden border border-graphite-dark/20 bg-graphite-dark/15 md:grid-cols-4">
-        <Kpi label="block · 24h" value={fmt(blocked)} />
-        <Kpi label="redact · 24h" value={fmt(redacted)} />
-        <Kpi label="warn · 24h" value={fmt(warned)} />
+        <Kpi label="block · 24h" value={fmt(blocked)} tone={ACTION_TONE.BLOCK.tile} />
+        <Kpi label="redact · 24h" value={fmt(redacted)} tone={ACTION_TONE.REDACT.tile} />
+        <Kpi label="warn · 24h" value={fmt(warned)} tone={ACTION_TONE.WARN.tile} />
         <Kpi label="p50 latencia" value={`${avgLatency} ms`} />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+      <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
         <RecentEventsPanel events={events} />
         <PendingPanel
           pendingSuggestions={pendingSuggestions}
@@ -104,8 +135,10 @@ function greetingFor(score: number | null, total: number): string {
     return "Sin tráfico todavía. Cuando un dev mande el primer prompt vía proxy, aparece acá.";
   }
   if (score === null) return "Cargando datos…";
-  if (score >= 95) return "Tráfico saludable. La mayoría de prompts pasa sin desvíos de policy.";
-  if (score >= 80) return "Hay algunos desvíos detectados. Revisá las sugerencias y los eventos más recientes.";
+  if (score >= 95)
+    return "Tráfico saludable. La mayoría de prompts pasa sin desvíos de policy.";
+  if (score >= 80)
+    return "Hay algunos desvíos detectados. Revisá las sugerencias y los eventos más recientes.";
   return "Atención: una porción significativa del tráfico se está bloqueando. Revisá las reglas y la cola de sugerencias.";
 }
 
@@ -130,7 +163,7 @@ function AlignmentHero({
 }) {
   return (
     <div
-      className="border border-graphite-dark/20 bg-paper p-6 md:p-8"
+      className="border border-graphite-dark/20 bg-paper p-5 md:p-6"
       style={{ borderRadius: "var(--radius)" }}
     >
       <span className="font-mono text-[11px] uppercase tracking-[0.28em] text-graphite">
@@ -138,12 +171,12 @@ function AlignmentHero({
       </span>
 
       {score !== null ? (
-        <div className="mt-6 flex flex-wrap items-end justify-between gap-6">
+        <div className="mt-4 flex flex-wrap items-end justify-between gap-4 md:mt-5">
           <div className="flex items-end gap-2">
-            <span className="text-6xl font-semibold leading-none tracking-tighter text-ink sm:text-7xl md:text-8xl">
+            <span className="text-5xl font-semibold leading-none tracking-tighter text-ink sm:text-6xl md:text-7xl">
               {score.toFixed(1)}
             </span>
-            <span className="pb-2 text-3xl font-medium leading-none text-graphite-dark md:text-4xl">
+            <span className="pb-1.5 text-2xl font-medium leading-none text-graphite-dark md:text-3xl">
               %
             </span>
           </div>
@@ -158,13 +191,13 @@ function AlignmentHero({
           </p>
         </div>
       ) : (
-        <p className="mt-6 font-mono text-xs text-graphite">
+        <p className="mt-4 font-mono text-xs text-graphite">
           // sin datos suficientes para calcular alineamiento
         </p>
       )}
 
       {score !== null ? (
-        <div className="relative mt-6 h-1.5 w-full bg-paper-soft">
+        <div className="relative mt-4 h-1.5 w-full bg-paper-soft md:mt-5">
           <div
             className="absolute inset-y-0 left-0 bg-ink"
             style={{ width: `${Math.max(score, 1)}%` }}
@@ -176,16 +209,26 @@ function AlignmentHero({
 }
 
 // ---------------------------------------------------------------------------
-// KPI tile (matches the style of the cascade cells)
+// KPI tile
 // ---------------------------------------------------------------------------
 
-function Kpi({ label, value }: { label: string; value: string }) {
+function Kpi({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: string;
+}) {
   return (
     <div className="flex flex-col gap-1.5 bg-paper p-4 md:p-5">
       <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-graphite">
         // {label}
       </span>
-      <span className="text-2xl font-semibold tracking-tight text-ink md:text-3xl">
+      <span
+        className={`text-xl font-semibold tracking-tight md:text-2xl ${tone ?? "text-ink"}`}
+      >
         {value}
       </span>
     </div>
@@ -204,7 +247,7 @@ function RecentEventsPanel({ events }: { events: EventDTO[] }) {
       className="flex flex-col border border-graphite-dark/20 bg-paper"
       style={{ borderRadius: "var(--radius)" }}
     >
-      <header className="flex items-baseline justify-between border-b border-graphite-dark/15 px-5 py-4">
+      <header className="flex items-baseline justify-between border-b border-graphite-dark/15 px-5 py-3">
         <span className="font-mono text-xs uppercase tracking-[0.22em] text-graphite">
           // últimos eventos
         </span>
@@ -222,9 +265,13 @@ function RecentEventsPanel({ events }: { events: EventDTO[] }) {
       ) : (
         <ul className="divide-y divide-graphite-dark/10">
           {events.map((e) => (
-            <li key={e.id} className="flex flex-col gap-1.5 px-5 py-3">
+            <li key={e.id} className="flex flex-col gap-1.5 px-5 py-2.5">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <ActionPill action={e.action as Action} />
+                <span
+                  className={`px-2 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-wider ${ACTION_TONE[e.action as Action].pill}`}
+                >
+                  {e.action}
+                </span>
                 <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-graphite">
                   {timeAgo(e.createdAt)} · {e.latencyTotalMs}ms ·{" "}
                   {e.policyHits?.[0]?.slug ?? "—"}
@@ -242,8 +289,6 @@ function RecentEventsPanel({ events }: { events: EventDTO[] }) {
 }
 
 function previewPrompt(prompt: string): string {
-  // Best-effort 1-line preview: parse JSON-encoded body, surface the last
-  // user message; fall back to the raw string. Truncate to 120 chars.
   let text = prompt;
   try {
     const parsed = JSON.parse(prompt) as {
@@ -320,7 +365,7 @@ function PendingPanel({
         value={activeMembersCount}
         secondary={
           pendingMembersCount > 0
-            ? `${pendingMembersCount} pendientes de primer login`
+            ? `${pendingMembersCount} pendientes`
             : "todos vinculados"
         }
         href="/admin/team"
@@ -349,7 +394,7 @@ function PendingItem({
   return (
     <Link
       href={href}
-      className="group flex items-center justify-between bg-paper p-5 transition-colors hover:bg-paper-soft/40"
+      className="group flex items-center justify-between bg-paper p-4 transition-colors hover:bg-paper-soft/40 md:p-5"
     >
       <div className="flex flex-col gap-1">
         <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-graphite">
@@ -357,7 +402,7 @@ function PendingItem({
         </span>
         <div className="flex items-baseline gap-2">
           <span
-            className={`text-2xl tracking-tight ${
+            className={`text-xl tracking-tight md:text-2xl ${
               emphasis ? "font-bold text-ink" : "font-semibold text-ink"
             }`}
           >
