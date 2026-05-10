@@ -1,7 +1,16 @@
 // `//` is a deliberate visual token from the design system (see
 // identidad/design.md § 3, "Comments tipo código"), not stray JS comments.
 /* eslint-disable react/jsx-no-comment-textnodes */
-import Link from "next/link";
+import {
+  ActionPill,
+  Button,
+  EmptyState,
+  KvLine,
+  SectionHeading,
+  type Action,
+} from "@/components/ui";
+import { Reveal, Stagger, StaggerItem } from "@/components/motion";
+
 import { Hero } from "./_components/hero";
 import { SiteHeader, Wordmark } from "./_components/site-header";
 
@@ -14,8 +23,6 @@ const TEAM = [
 ];
 
 const REPO_URL = "https://github.com/platanus-hack/platanus-hack-26-ar-team-22";
-
-type Action = "LOG" | "WARN" | "REDACT" | "BLOCK";
 
 export default function HomePage() {
   return (
@@ -36,46 +43,46 @@ export default function HomePage() {
 }
 
 // ---------------------------------------------------------------------------
-// Demo cell shown right after the hero — a sample request running through
-// the cascade and exiting as a verdict pill. Lives on paper so it reads as
-// a fragment of log lifted out of the dark hero.
+// Demo bridge — a real request flowing through the cascade right under the
+// hero. Lives on paper so it reads as a fragment of log lifted out of the
+// dark hero. Sequential reveal makes the three cells feel like a flow.
+// ---------------------------------------------------------------------------
+
 function DemoSection() {
   return (
     <section className="w-full bg-paper">
       <div className="mx-auto max-w-6xl px-6 pb-12 pt-16 md:pb-20 md:pt-24">
-        <DemoStrip />
+        <Stagger
+          gap={0.12}
+          className="grid gap-px overflow-hidden border border-graphite-dark/20 bg-graphite-dark/15 md:grid-cols-3"
+        >
+          <StaggerItem>
+            <DemoCell label="01 · request">
+              <code className="block font-mono text-xs leading-relaxed text-ink md:text-sm">
+                $ claude &quot;ayudame con esto: AKIAIOSFODNN7EXAMPLE&quot;
+              </code>
+            </DemoCell>
+          </StaggerItem>
+          <StaggerItem>
+            <DemoCell label="02 · cascada">
+              <div className="flex flex-col gap-1.5 font-mono text-xs leading-relaxed">
+                <span className="text-ink">regex · 4ms · match aws-access-key</span>
+                <span className="text-graphite">pattern · skip</span>
+                <span className="text-graphite">haiku · skip</span>
+              </div>
+            </DemoCell>
+          </StaggerItem>
+          <StaggerItem>
+            <DemoCell label="03 · veredicto">
+              <ActionPill action="BLOCK" rule="aws-access-key" />
+              <span className="mt-2 block font-mono text-[11px] text-graphite">
+                trace · 01HXYZK… · 9ms
+              </span>
+            </DemoCell>
+          </StaggerItem>
+        </Stagger>
       </div>
     </section>
-  );
-}
-
-// Tira inline al pie del hero: una request real entrando, la cascada decidiendo,
-// la pill saliendo. Estática, sin JS — lee como un fragmento de log.
-function DemoStrip() {
-  return (
-    <div
-      className="rise grid gap-px overflow-hidden border border-graphite-dark/20 bg-graphite-dark/15 md:grid-cols-3"
-      style={{ animationDelay: "240ms", borderRadius: "var(--radius)" }}
-    >
-      <DemoCell label="01 · request">
-        <code className="block font-mono text-xs leading-relaxed text-ink md:text-sm">
-          $ claude &quot;ayudame con esto: AKIAIOSFODNN7EXAMPLE&quot;
-        </code>
-      </DemoCell>
-      <DemoCell label="02 · cascada">
-        <div className="flex flex-col gap-1.5 font-mono text-xs leading-relaxed">
-          <span className="text-ink">regex · 4ms · match aws-access-key</span>
-          <span className="text-graphite">pattern · skip</span>
-          <span className="text-graphite">haiku · skip</span>
-        </div>
-      </DemoCell>
-      <DemoCell label="03 · veredicto">
-        <ActionPill action="BLOCK" rule="aws-access-key" />
-        <span className="mt-2 block font-mono text-[11px] text-graphite">
-          trace · 01HXYZK… · 9ms
-        </span>
-      </DemoCell>
-    </div>
   );
 }
 
@@ -87,7 +94,7 @@ function DemoCell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-3 bg-paper p-5 md:p-6">
+    <div className="flex h-full flex-col gap-3 bg-paper p-5 md:p-6">
       <span className="font-mono text-[11px] uppercase tracking-wider text-graphite">
         // {label}
       </span>
@@ -97,7 +104,8 @@ function DemoCell({
 }
 
 // ---------------------------------------------------------------------------
-// Problema
+// [01] El problema — three concrete misalignments. Stagger the cards so the
+// section reads as a sequence, not three identical tiles.
 // ---------------------------------------------------------------------------
 
 type ProblemCase = {
@@ -112,7 +120,7 @@ type ProblemCase = {
 function ProblemSection() {
   const cases: ProblemCase[] = [
     {
-      tag: "01 · credencial",
+      tag: "credencial",
       title: "Leak de AWS key",
       prompt: "ayudame a debuggear esto: AKIAIOSFODNN7EXAMPLE",
       consequence:
@@ -121,7 +129,7 @@ function ProblemSection() {
       rule: "aws-access-key",
     },
     {
-      tag: "02 · cliente",
+      tag: "cliente",
       title: "Mención de cliente real",
       prompt: "escribime un email para Acme Corp explicando el bug",
       consequence:
@@ -130,7 +138,7 @@ function ProblemSection() {
       rule: "client-name",
     },
     {
-      tag: "03 · secreto",
+      tag: "secreto",
       title: "Paste accidental de .env",
       prompt: "no funciona el .env: DATABASE_URL=postgres://admin:Pa$$…",
       consequence:
@@ -146,41 +154,56 @@ function ProblemSection() {
       className="w-full border-y border-graphite-dark/15 bg-paper-soft/40"
     >
       <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
-        <SectionHeading
-          tag="el problema"
-          title="Tus devs usan Claude Code. Sin contexto de las políticas de la org, cualquier prompt puede estar desalineado sin que nadie lo sepa."
-          subtitle="Sin un punto de alineamiento intermedio, el dev opera a ciegas respecto de las políticas de la org. Tranquera registra el desvío, informa al dev y mantiene trazabilidad completa."
-        />
-        <div className="grid gap-6 md:grid-cols-3">
-          {cases.map((c) => (
-            <article
-              key={c.tag}
-              className="group flex flex-col gap-4 border border-graphite-dark/20 bg-paper p-6 transition-transform hover:-translate-y-0.5"
-              style={{ borderRadius: "var(--radius)" }}
-            >
-              <span className="font-mono text-xs uppercase tracking-wider text-graphite">
-                // {c.tag}
-              </span>
-              <h3 className="text-xl font-semibold">{c.title}</h3>
-              <pre className="whitespace-pre-wrap break-words bg-paper-soft/60 p-3 font-mono text-xs leading-relaxed text-ink">
-                $ claude &quot;{c.prompt}&quot;
-              </pre>
-              <p className="text-sm leading-relaxed text-graphite-dark">
-                {c.consequence}
-              </p>
-              <div className="mt-auto pt-2">
-                <ActionPill action={c.action} rule={c.rule} />
-              </div>
-            </article>
+        <Reveal>
+          <SectionHeading
+            index="01"
+            tag="el problema"
+            title="Tus devs usan Claude Code. Sin contexto de las políticas de la org, cualquier prompt puede estar desalineado sin que nadie lo sepa."
+            subtitle="Sin un punto de alineamiento intermedio, el dev opera a ciegas respecto de las políticas de la org. Tranquera registra el desvío, informa al dev y mantiene trazabilidad completa."
+          />
+        </Reveal>
+        <Stagger gap={0.12} className="grid gap-6 md:grid-cols-3">
+          {cases.map((c, i) => (
+            <StaggerItem key={c.tag}>
+              <article
+                className="group relative flex h-full flex-col gap-4 border border-graphite-dark/20 bg-paper p-6 transition-transform hover:-translate-y-0.5"
+                style={{ borderRadius: "var(--radius)" }}
+              >
+                <span
+                  aria-hidden
+                  className={`absolute inset-y-0 left-0 w-1 ${
+                    c.action === "BLOCK"
+                      ? "bg-ink"
+                      : c.action === "REDACT"
+                        ? "bg-ink/75"
+                        : "bg-graphite-dark"
+                  }`}
+                />
+                <span className="font-mono text-xs uppercase tracking-wider text-graphite">
+                  // 0{i + 1} · {c.tag}
+                </span>
+                <h3 className="text-xl font-semibold">{c.title}</h3>
+                <pre className="whitespace-pre-wrap break-words bg-paper-soft/60 p-3 font-mono text-xs leading-relaxed text-ink">
+                  $ claude &quot;{c.prompt}&quot;
+                </pre>
+                <p className="text-sm leading-relaxed text-graphite-dark">
+                  {c.consequence}
+                </p>
+                <div className="mt-auto pt-2">
+                  <ActionPill action={c.action} rule={c.rule} />
+                </div>
+              </article>
+            </StaggerItem>
           ))}
-        </div>
+        </Stagger>
       </div>
     </section>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Cómo funciona
+// [02] Cómo funciona — four layers + cascada. The cascade is the heart of
+// the product; F1-B replaces this static block with an interactive demo.
 // ---------------------------------------------------------------------------
 
 function HowItWorksSection() {
@@ -210,14 +233,17 @@ function HowItWorksSection() {
   return (
     <section id="como-funciona" className="w-full">
       <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
-        <SectionHeading
-          tag="cómo funciona"
-          title="Cuatro capas. Una sola tranquera entre Claude Code y Anthropic."
-        />
+        <Reveal>
+          <SectionHeading
+            index="02"
+            tag="cómo funciona"
+            title="Cuatro capas. Una sola tranquera entre Claude Code y Anthropic."
+          />
+        </Reveal>
 
-        <div className="mb-16 flex flex-col gap-2">
+        <Stagger gap={0.08} className="mb-16 flex flex-col gap-2">
           {layers.map((layer) => (
-            <div
+            <StaggerItem
               key={layer.n}
               className="grid grid-cols-[auto_1fr] items-baseline gap-x-8 gap-y-2 border-l-2 border-ink py-4 pl-6 md:grid-cols-[7rem_1fr]"
             >
@@ -228,12 +254,16 @@ function HowItWorksSection() {
               <p className="col-start-2 max-w-2xl text-graphite-dark">
                 {layer.desc}
               </p>
-            </div>
+            </StaggerItem>
           ))}
-        </div>
+        </Stagger>
 
-        <Cascade />
-        <ActionsLegend />
+        <Reveal>
+          <Cascade />
+        </Reveal>
+        <Reveal delay={0.2}>
+          <ActionsLegend />
+        </Reveal>
       </div>
     </section>
   );
@@ -325,28 +355,36 @@ function Arrow() {
 
 function ActionsLegend() {
   return (
-    <div className="mt-12 grid gap-4 md:grid-cols-4">
-      <ActionRow
-        action="LOG"
-        title="Solo registra"
-        desc="Baseline. Útil antes de promover una regla a más estricta."
-      />
-      <ActionRow
-        action="WARN"
-        title="Pasa pero notifica"
-        desc="Patrones sospechosos no críticos. El admin se entera."
-      />
-      <ActionRow
-        action="REDACT"
-        title="Reemplaza y reenvía"
-        desc="Nombres, paths internos, snippets propietarios."
-      />
-      <ActionRow
-        action="BLOCK"
-        title="Devuelve mensaje sintético"
-        desc="PII crítica, credenciales, info regulada."
-      />
-    </div>
+    <Stagger gap={0.08} className="mt-12 grid gap-4 md:grid-cols-4">
+      <StaggerItem>
+        <ActionRow
+          action="LOG"
+          title="Solo registra"
+          desc="Baseline. Útil antes de promover una regla a más estricta."
+        />
+      </StaggerItem>
+      <StaggerItem>
+        <ActionRow
+          action="WARN"
+          title="Pasa pero notifica"
+          desc="Patrones sospechosos no críticos. El admin se entera."
+        />
+      </StaggerItem>
+      <StaggerItem>
+        <ActionRow
+          action="REDACT"
+          title="Reemplaza y reenvía"
+          desc="Nombres, paths internos, snippets propietarios."
+        />
+      </StaggerItem>
+      <StaggerItem>
+        <ActionRow
+          action="BLOCK"
+          title="Devuelve mensaje sintético"
+          desc="PII crítica, credenciales, info regulada."
+        />
+      </StaggerItem>
+    </Stagger>
   );
 }
 
@@ -360,7 +398,7 @@ function ActionRow({
   desc: string;
 }) {
   return (
-    <div className="flex flex-col gap-3 border-t-2 border-ink pt-4">
+    <div className="flex h-full flex-col gap-3 border-t-2 border-ink pt-4">
       <ActionPill action={action} />
       <h4 className="text-base font-semibold">{title}</h4>
       <p className="text-sm leading-relaxed text-graphite-dark">{desc}</p>
@@ -369,38 +407,50 @@ function ActionRow({
 }
 
 // ---------------------------------------------------------------------------
-// Install — lo que el dev tipea para empezar a usar tranquera
+// [03] Install — what the dev types to start. F1-D will turn the terminal
+// into a typewriter and add copy-to-clipboard on the command.
 // ---------------------------------------------------------------------------
 
 function InstallSection() {
   return (
     <section id="install" className="w-full bg-paper-soft/40">
       <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
-        <SectionHeading
-          tag="instalá tranquera"
-          title="Para tu dev, todo se reduce a un comando."
-          subtitle="Sin SDK nuevo, sin wrapper, sin re-entrenar a nadie. El admin lo invita por email; el dev se loguea con Google una sola vez. Después, cada prompt de `claude` queda atribuido a su cuenta y pasa por las reglas de la org."
-        />
+        <Reveal>
+          <SectionHeading
+            index="03"
+            tag="instalá tranquera"
+            title="Para tu dev, todo se reduce a un comando."
+            subtitle="Sin SDK nuevo, sin wrapper, sin re-entrenar a nadie. El admin lo invita por email; el dev se loguea con Google una sola vez. Después, cada prompt de `claude` queda atribuido a su cuenta y pasa por las reglas de la org."
+          />
+        </Reveal>
 
-        <InstallTerminal />
+        <Reveal delay={0.1}>
+          <InstallTerminal />
+        </Reveal>
 
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
-          <InstallStep
-            n="01"
-            title="Login con Google"
-            body="El CLI abre el browser, el dev autoriza con su cuenta. El admin tiene que haberlo agregado antes desde /admin/team."
-          />
-          <InstallStep
-            n="02"
-            title="ANTHROPIC_BASE_URL al rc"
-            body="Variable estándar de Anthropic. Cero invasión: si te arrepentís, npx tranquera logout revoca el token y saca la export del rc. Volvés al estado anterior con un comando."
-          />
-          <InstallStep
-            n="03"
-            title="Atribución por dev"
-            body="El token vinculado al CLI hace que cada request quede asociada al dev correcto en el back-office. El admin ve quién hizo qué."
-          />
-        </div>
+        <Stagger gap={0.1} className="mt-10 grid gap-6 md:grid-cols-3">
+          <StaggerItem>
+            <InstallStep
+              n="01"
+              title="Login con Google"
+              body="El CLI abre el browser, el dev autoriza con su cuenta. El admin tiene que haberlo agregado antes desde /admin/team."
+            />
+          </StaggerItem>
+          <StaggerItem>
+            <InstallStep
+              n="02"
+              title="ANTHROPIC_BASE_URL al rc"
+              body="Variable estándar de Anthropic. Cero invasión: si te arrepentís, npx tranquera logout revoca el token y saca la export del rc. Volvés al estado anterior con un comando."
+            />
+          </StaggerItem>
+          <StaggerItem>
+            <InstallStep
+              n="03"
+              title="Atribución por dev"
+              body="El token vinculado al CLI hace que cada request quede asociada al dev correcto en el back-office. El admin ve quién hizo qué."
+            />
+          </StaggerItem>
+        </Stagger>
 
         <p className="mt-10 max-w-3xl font-mono text-xs leading-relaxed text-graphite">
           // requiere node 18+ (que ya tenés si usás claude code). compatible
@@ -415,7 +465,7 @@ function InstallSection() {
 function InstallTerminal() {
   return (
     <div
-      className="rise overflow-hidden border border-graphite-dark/20 bg-ink"
+      className="overflow-hidden border border-graphite-dark/20 bg-ink"
       style={{ borderRadius: "var(--radius)" }}
     >
       <div className="flex items-center justify-between border-b border-paper/10 px-5 py-3 font-mono text-[11px] uppercase tracking-wider text-paper/55">
@@ -464,7 +514,7 @@ function InstallStep({
   body: string;
 }) {
   return (
-    <div className="flex flex-col gap-2 border-t-2 border-ink pt-4">
+    <div className="flex h-full flex-col gap-2 border-t-2 border-ink pt-4">
       <span className="font-mono text-sm text-graphite">{n} ·</span>
       <h3 className="text-base font-semibold">{title}</h3>
       <p className="text-sm leading-relaxed text-graphite-dark">{body}</p>
@@ -473,63 +523,71 @@ function InstallStep({
 }
 
 // ---------------------------------------------------------------------------
-// Trace card — lo que ve el dev cuando hay BLOCK
+// [04] Trace — what the dev sees on BLOCK. F1-C will sequence-reveal the
+// two cards with a connector scan-line.
 // ---------------------------------------------------------------------------
 
 function TraceSection() {
   return (
     <section id="trace" className="w-full border-y border-graphite-dark/15">
       <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
-        <SectionHeading
-          tag="trace"
-          title="El dev sabe dónde se desalineó. Cada decisión, explicada."
-          subtitle="Devolver un Message sintético en vez de un 403 no es casualidad. El dev entiende qué política aplica y cómo realinearse — sin ver un error de red, sin perder el contexto de trabajo."
-        />
-        <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-          <TraceCard
-            label="// request entrante"
-            theme="light"
-            body={
-              <>
-                <KvLine k="POST" v="/v1/messages" />
-                <KvLine k="x-api-key" v="sk-ant-…" />
-                <KvLine k="anthropic-version" v="2023-06-01" />
-                <div className="mt-4 break-words bg-paper-soft/60 p-3 font-mono text-xs leading-relaxed text-ink">
-                  {`{ "model": "claude-sonnet-4-6",
+        <Reveal>
+          <SectionHeading
+            index="04"
+            tag="trace"
+            title="El dev sabe dónde se desalineó. Cada decisión, explicada."
+            subtitle="Devolver un Message sintético en vez de un 403 no es casualidad. El dev entiende qué política aplica y cómo realinearse — sin ver un error de red, sin perder el contexto de trabajo."
+          />
+        </Reveal>
+        <Stagger gap={0.18} className="grid gap-6 lg:grid-cols-[1fr_1fr]">
+          <StaggerItem>
+            <TraceCard
+              label="// request entrante"
+              theme="light"
+              body={
+                <>
+                  <KvLine k="POST" v="/v1/messages" />
+                  <KvLine k="x-api-key" v="sk-ant-…" />
+                  <KvLine k="anthropic-version" v="2023-06-01" />
+                  <div className="mt-4 break-words bg-paper-soft/60 p-3 font-mono text-xs leading-relaxed text-ink">
+                    {`{ "model": "claude-sonnet-4-6",
   "messages": [{
     "role": "user",
     "content": "ayudame con AKIAIOSFODNN7EXAMPLE"
   }] }`}
-                </div>
-              </>
-            }
-          />
-          <TraceCard
-            label="// respuesta sintética · BLOCK"
-            theme="dark"
-            body={
-              <>
-                <KvLine k="x-team22-trace-id" v="01HXYZK…" theme="dark" />
-                <KvLine k="x-team22-action" v="BLOCK" theme="dark" />
-                <KvLine k="stop_reason" v="team22_blocked" theme="dark" />
-                <div className="mt-4 break-words border border-graphite-dark p-3 font-mono text-xs leading-relaxed text-paper">
-                  Tu prompt se alejó de la política{" "}
-                  <span className="text-paper underline underline-offset-2">
-                    aws-access-key
-                  </span>
-                  : detectamos un patrón de AWS Secret Access Key. Para trabajar
-                  con credenciales reales dentro del marco de la org, abrí un
-                  ticket con tu admin.
-                </div>
-                <div className="mt-3 flex items-center gap-3 font-mono text-[11px] text-graphite">
-                  <span>// total · 9ms</span>
-                  <span className="hairline h-3 w-px" />
-                  <span>// upstream · skipped</span>
-                </div>
-              </>
-            }
-          />
-        </div>
+                  </div>
+                </>
+              }
+            />
+          </StaggerItem>
+          <StaggerItem>
+            <TraceCard
+              label="// respuesta sintética · BLOCK"
+              theme="dark"
+              body={
+                <>
+                  <KvLine k="x-team22-trace-id" v="01HXYZK…" dark />
+                  <KvLine k="x-team22-action" v="BLOCK" dark />
+                  <KvLine k="stop_reason" v="team22_blocked" dark />
+                  <div className="mt-4 break-words border border-graphite-dark p-3 font-mono text-xs leading-relaxed text-paper">
+                    Tu prompt se alejó de la política{" "}
+                    <span className="text-paper underline underline-offset-2">
+                      aws-access-key
+                    </span>
+                    : detectamos un patrón de AWS Secret Access Key. Para
+                    trabajar con credenciales reales dentro del marco de la
+                    org, abrí un ticket con tu admin.
+                  </div>
+                  <div className="mt-3 flex items-center gap-3 font-mono text-[11px] text-graphite">
+                    <span>// total · 9ms</span>
+                    <span className="hairline h-3 w-px" />
+                    <span>// upstream · skipped</span>
+                  </div>
+                </>
+              }
+            />
+          </StaggerItem>
+        </Stagger>
       </div>
     </section>
   );
@@ -550,14 +608,10 @@ function TraceCard({
       : "bg-paper text-ink border border-graphite-dark/20";
   return (
     <article
-      className={`flex flex-col gap-4 p-6 md:p-8 ${base}`}
+      className={`flex h-full flex-col gap-4 p-6 md:p-8 ${base}`}
       style={{ borderRadius: "var(--radius)" }}
     >
-      <span
-        className={`font-mono text-xs uppercase tracking-wider ${
-          theme === "dark" ? "text-graphite" : "text-graphite"
-        }`}
-      >
+      <span className="font-mono text-xs uppercase tracking-wider text-graphite">
         {label}
       </span>
       <div className="flex flex-col gap-2">{body}</div>
@@ -565,25 +619,8 @@ function TraceCard({
   );
 }
 
-function KvLine({
-  k,
-  v,
-  theme = "light",
-}: {
-  k: string;
-  v: string;
-  theme?: "light" | "dark";
-}) {
-  return (
-    <div className="flex items-baseline gap-3 font-mono text-xs leading-relaxed">
-      <span className="text-graphite">{k}</span>
-      <span className={theme === "dark" ? "text-paper" : "text-ink"}>{v}</span>
-    </div>
-  );
-}
-
 // ---------------------------------------------------------------------------
-// Por qué LATAM
+// [05] Por qué LATAM
 // ---------------------------------------------------------------------------
 
 function WhyLatamSection() {
@@ -611,86 +648,100 @@ function WhyLatamSection() {
   return (
     <section id="latam" className="w-full bg-ink text-paper">
       <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
-        <SectionHeading
-          tag="por qué latam, ahora"
-          title="Cinco países, cinco leyes risk-based en simultáneo."
-          subtitle="Toda empresa con LLM en producción va a necesitar evidencia auditable. La pregunta no es si — es contra qué framework demostrarlo primero."
-          dark
-        />
-        <div className="grid gap-6 md:grid-cols-3">
+        <Reveal>
+          <SectionHeading
+            index="05"
+            tag="por qué latam, ahora"
+            title="Cinco países, cinco leyes risk-based en simultáneo."
+            subtitle="Toda empresa con LLM en producción va a necesitar evidencia auditable. La pregunta no es si — es contra qué framework demostrarlo primero."
+            dark
+          />
+        </Reveal>
+        <Stagger gap={0.12} className="grid gap-6 md:grid-cols-3">
           {sources.map((s) => (
-            <article
-              key={s.country}
-              className="flex flex-col gap-3 border border-paper/15 p-6 transition-colors hover:border-paper/35"
-              style={{ borderRadius: "var(--radius)" }}
-            >
-              <span className="font-mono text-xs uppercase tracking-wider text-graphite">
-                // {s.country.toLowerCase()}
-              </span>
-              <h3 className="text-lg font-semibold">{s.law}</h3>
-              <p className="text-sm leading-relaxed text-paper/75">
-                {s.detail}
-              </p>
-            </article>
+            <StaggerItem key={s.country}>
+              <article
+                className="flex h-full flex-col gap-3 border border-paper/15 p-6 transition-colors hover:border-paper/35"
+                style={{ borderRadius: "var(--radius)" }}
+              >
+                <span className="font-mono text-xs uppercase tracking-wider text-graphite">
+                  // {s.country.toLowerCase()}
+                </span>
+                <h3 className="text-lg font-semibold">{s.law}</h3>
+                <p className="text-sm leading-relaxed text-paper/75">
+                  {s.detail}
+                </p>
+              </article>
+            </StaggerItem>
           ))}
-        </div>
-        <div
-          className="mt-12 flex flex-col gap-3 border-l-2 border-paper/30 pl-6"
-          style={{ borderRadius: "var(--radius)" }}
-        >
-          <span className="font-mono text-xs uppercase tracking-wider text-graphite">
-            // gap multilingüe
-          </span>
-          <p className="max-w-3xl text-base leading-relaxed text-paper/80">
-            XL-SafetyBench, el benchmark de referencia para safety multilingüe,
-            no incluye portugués ni países latinoamericanos. La literatura
-            académica de safety es &gt;&nbsp;90&nbsp;%&nbsp;inglés. Construir
-            desde acá no es ventaja: es necesidad.
-          </p>
-        </div>
+        </Stagger>
+        <Reveal delay={0.15}>
+          <div
+            className="mt-12 flex flex-col gap-3 border-l-2 border-paper/30 pl-6"
+            style={{ borderRadius: "var(--radius)" }}
+          >
+            <span className="font-mono text-xs uppercase tracking-wider text-graphite">
+              // gap multilingüe
+            </span>
+            <p className="max-w-3xl text-base leading-relaxed text-paper/80">
+              XL-SafetyBench, el benchmark de referencia para safety
+              multilingüe, no incluye portugués ni países latinoamericanos. La
+              literatura académica de safety es &gt;&nbsp;90&nbsp;%&nbsp;inglés.
+              Construir desde acá no es ventaja: es necesidad.
+            </p>
+          </div>
+        </Reveal>
       </div>
     </section>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Manifiesto
+// [06] Manifiesto — F1-E adds the underline-draw animation on "alineados".
 // ---------------------------------------------------------------------------
 
 function ManifestoSection() {
   return (
     <section className="w-full">
       <div className="mx-auto max-w-5xl px-6 py-24 md:py-32">
-        <div className="mb-14 flex flex-col items-center gap-6 text-center">
-          <span className="font-mono text-xs uppercase tracking-wider text-graphite">
-            // manifiesto
-          </span>
-          <p className="max-w-3xl text-2xl font-medium leading-snug md:text-3xl">
-            No es vigilancia. No es un escudo. Es el punto donde el dev, la org
-            y el modelo quedan{" "}
-            <em className="not-italic underline decoration-graphite underline-offset-[10px]">
-              alineados
-            </em>{" "}
-            — sin interrumpir el ritmo de quien escribe.
-          </p>
-        </div>
-        <div className="grid gap-10 md:grid-cols-3">
-          <Principle
-            n="01"
-            title="Preciso"
-            body="Reglas explícitas, decisiones reproducibles. Cada veredicto se puede explicar con su trace."
-          />
-          <Principle
-            n="02"
-            title="Silencioso"
-            body="No interrumpe al usuario que tiene buena intención. La fricción es proporcional al riesgo, nunca al ruido."
-          />
-          <Principle
-            n="03"
-            title="Permanente"
-            body="No es un experimento ni un toggle. Es infraestructura: siempre encendida, siempre auditable."
-          />
-        </div>
+        <Reveal>
+          <div className="mb-14 flex flex-col items-center gap-6 text-center">
+            <span className="font-mono text-xs uppercase tracking-[0.28em] text-graphite">
+              [06] // manifiesto
+            </span>
+            <p className="max-w-3xl text-2xl font-medium leading-snug md:text-3xl">
+              No es vigilancia. No es un escudo. Es el punto donde el dev, la
+              org y el modelo quedan{" "}
+              <em className="not-italic underline decoration-graphite underline-offset-[10px]">
+                alineados
+              </em>{" "}
+              — sin interrumpir el ritmo de quien escribe.
+            </p>
+          </div>
+        </Reveal>
+        <Stagger gap={0.12} className="grid gap-10 md:grid-cols-3">
+          <StaggerItem>
+            <Principle
+              n="01"
+              title="Preciso"
+              body="Reglas explícitas, decisiones reproducibles. Cada veredicto se puede explicar con su trace."
+            />
+          </StaggerItem>
+          <StaggerItem>
+            <Principle
+              n="02"
+              title="Silencioso"
+              body="No interrumpe al usuario que tiene buena intención. La fricción es proporcional al riesgo, nunca al ruido."
+            />
+          </StaggerItem>
+          <StaggerItem>
+            <Principle
+              n="03"
+              title="Permanente"
+              body="No es un experimento ni un toggle. Es infraestructura: siempre encendida, siempre auditable."
+            />
+          </StaggerItem>
+        </Stagger>
       </div>
     </section>
   );
@@ -706,7 +757,7 @@ function Principle({
   body: string;
 }) {
   return (
-    <div className="flex flex-col gap-3 border-t-2 border-ink pt-5">
+    <div className="flex h-full flex-col gap-3 border-t-2 border-ink pt-5">
       <span className="font-mono text-sm text-graphite">{n} ·</span>
       <h3 className="text-lg font-semibold">{title}</h3>
       <p className="text-sm leading-relaxed text-graphite-dark">{body}</p>
@@ -715,39 +766,35 @@ function Principle({
 }
 
 // ---------------------------------------------------------------------------
-// CTA final
+// [07] CTA final
 // ---------------------------------------------------------------------------
 
 function FinalCta() {
   return (
     <section className="w-full border-t border-graphite-dark/15 bg-paper-soft/40">
       <div className="mx-auto flex max-w-5xl flex-col items-start gap-8 px-6 py-20 md:flex-row md:items-center md:justify-between md:py-24">
-        <div className="flex max-w-2xl flex-col gap-3">
-          <span className="font-mono text-xs uppercase tracking-wider text-graphite">
-            // siguiente paso
+        <Reveal className="flex max-w-2xl flex-col gap-3">
+          <span className="font-mono text-xs uppercase tracking-[0.28em] text-graphite">
+            [07] // siguiente paso
           </span>
           <h2 className="text-2xl font-semibold leading-tight tracking-tight md:text-4xl">
             Entrá al admin. Tres clicks, una regla nueva, eventos en vivo.
           </h2>
-        </div>
-        <div className="flex flex-wrap items-center gap-4">
-          <Link
-            href="/admin/login"
-            className="inline-flex items-center justify-center bg-ink px-7 py-3.5 font-medium text-paper transition-colors hover:bg-graphite-dark"
-            style={{ borderRadius: "var(--radius)" }}
-          >
-            Login →
-          </Link>
-          <Link
+        </Reveal>
+        <Reveal delay={0.15} className="flex flex-wrap items-center gap-4">
+          <Button href="/admin/login" variant="solid" tone="ink" size="lg" arrow>
+            Entrar al admin
+          </Button>
+          <Button
             href={REPO_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center border border-ink px-7 py-3.5 font-medium text-ink transition-colors hover:bg-ink hover:text-paper"
-            style={{ borderRadius: "var(--radius)" }}
+            external
+            variant="outline"
+            tone="ink"
+            size="lg"
           >
             Repositorio
-          </Link>
-        </div>
+          </Button>
+        </Reveal>
       </div>
     </section>
   );
@@ -793,87 +840,17 @@ function SiteFooter() {
         </div>
         <div className="flex items-center justify-between border-t border-graphite-dark/15 pt-6 font-mono text-xs text-graphite">
           <span>// sistema · v1.0 · 2026</span>
-          <Link
+          <a
             href={REPO_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="transition-colors hover:text-ink"
           >
             github →
-          </Link>
+          </a>
         </div>
       </div>
     </footer>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Section heading + ActionPill (atoms)
-// ---------------------------------------------------------------------------
-
-function SectionHeading({
-  tag,
-  title,
-  subtitle,
-  dark = false,
-}: {
-  tag: string;
-  title: string;
-  subtitle?: string;
-  dark?: boolean;
-}) {
-  return (
-    <div className="mb-12 flex max-w-3xl flex-col gap-4">
-      <span
-        className={`font-mono text-xs uppercase tracking-wider ${
-          dark ? "text-graphite" : "text-graphite"
-        }`}
-      >
-        // {tag}
-      </span>
-      <h2 className="text-3xl font-semibold leading-tight tracking-tight md:text-4xl">
-        {title}
-      </h2>
-      {subtitle ? (
-        <p
-          className={`max-w-2xl text-base leading-relaxed md:text-lg ${
-            dark ? "text-paper/75" : "text-graphite-dark"
-          }`}
-        >
-          {subtitle}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
-// Action pill — pesos por severidad según identidad/design.md § 6.
-//   LOG 400 · WARN 500 · REDACT 600 · BLOCK 700
-// La marca es monocroma (sin colores de status). Las superficies de
-// monitoreo en vivo (/admin/events) sí pueden sumar acento funcional;
-// la landing se queda en la paleta paper/ink/graphite.
-function ActionPill({ action, rule }: { action: Action; rule?: string }) {
-  const weight: Record<Action, string> = {
-    LOG: "font-normal",
-    WARN: "font-medium",
-    REDACT: "font-semibold",
-    BLOCK: "font-bold",
-  };
-  const indicator: Record<Action, string> = {
-    LOG: "bg-graphite",
-    WARN: "bg-graphite-dark",
-    REDACT: "bg-ink/80",
-    BLOCK: "bg-ink",
-  };
-  return (
-    <div className="inline-flex items-center gap-3 font-mono text-xs uppercase tracking-wider">
-      <span aria-hidden className={`h-4 w-1 ${indicator[action]}`} />
-      <span className={`text-ink ${weight[action]}`}>{action}</span>
-      {rule ? (
-        <span className="text-graphite normal-case">
-          → rule.id = <span className="text-ink">&quot;{rule}&quot;</span>
-        </span>
-      ) : null}
-    </div>
-  );
-}
