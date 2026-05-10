@@ -1,6 +1,7 @@
 // GET /api/admin/analytics?range=24h|7d|30d
 import { getAdminSession } from "@/lib/admin-session";
 import { prisma } from "@/lib/prisma";
+import { padHourly } from "@/lib/volume-buckets";
 import type { NextRequest } from "next/server";
 
 const RANGES = { "24h": 1, "7d": 7, "30d": 30 } as const;
@@ -62,10 +63,7 @@ export async function GET(request: NextRequest) {
     ]),
   );
 
-  const hourly = hourlyRows.map((r) => ({
-    hour: r.hour.toISOString(),
-    count: Number(r.count),
-  }));
+  const hourly = padHourly(hourlyRows, since);
 
   const topPolicies = topPoliciesRows.map((r) => ({
     slug: r.slug,

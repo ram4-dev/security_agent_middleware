@@ -4,8 +4,6 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { Sparkline } from "@/components/ui";
-
 type ActionStats = { count: number; avgLatencyMs: number };
 type AnalyticsData = {
   range: string;
@@ -167,7 +165,7 @@ export function AnalyticsPanel({ initial }: { initial: AnalyticsData }) {
       </div>
 
       {/* Hourly volume — gives the eye a "today vs. earlier" before drilling in */}
-      <HourlyVolume hourly={data.hourly} />
+      <HourlyVolume hourly={data.hourly} range={range} />
 
       {/* Secondary KPIs */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -297,17 +295,39 @@ function KpiCard({ label, value }: { label: string; value: string }) {
 
 function HourlyVolume({
   hourly,
+  range,
 }: {
   hourly: { hour: string; count: number }[];
+  range: Range;
 }) {
-  // Normalise to a fixed number of buckets so the chart doesn't squash
-  // wildly when the range changes. We pad zeros at the start.
-  const buckets = useMemo(() => {
-    const values = hourly.map((h) => h.count);
-    return values;
+  const total = useMemo(
+    () => hourly.reduce((a, b) => a + b.count, 0),
+    [hourly],
+  );
+  const { peakIdx, peakCount, peakHour } = useMemo(() => {
+    let idx = -1;
+    let count = 0;
+    for (let i = 0; i < hourly.length; i++) {
+      if (hourly[i].count > count) {
+        count = hourly[i].count;
+        idx = i;
+      }
+    }
+    return { peakIdx: idx, peakCount: count, peakHour: idx >= 0 ? hourly[idx].hour : null };
   }, [hourly]);
-  const total = buckets.reduce((a, b) => a + b, 0);
-  const peak = buckets.length > 0 ? Math.max(...buckets) : 0;
+
+  const W = 100;
+  const H = 36;
+  const slot = hourly.length > 0 ? W / hourly.length : 0;
+  const ticks = useMemo(() => {
+    if (hourly.length === 0) return [] as { x: number; label: string }[];
+    const idxs = [0, Math.floor(hourly.length / 2), hourly.length - 1];
+    return idxs.map((i) => ({
+      x: i * slot + slot / 2,
+      label: formatTick(hourly[i].hour, range),
+    }));
+  }, [hourly, slot, range]);
+
   return (
     <div
       className="flex flex-col gap-3 border border-graphite-dark/15 bg-paper p-5"
@@ -318,10 +338,74 @@ function HourlyVolume({
           // volumen por hora
         </span>
         <span className="font-mono text-[11px] uppercase tracking-wider text-graphite">
-          {total.toLocaleString("es-AR")} requests · pico {peak} / hora
+          {total.toLocaleString("es-AR")} requests · pico {peakCount}
+          {peakHour ? ` · ${formatPeak(peakHour, range)}` : ""}
         </span>
       </div>
-      <Sparkline values={buckets} variant="bars" height={36} className="text-ink" />
+      {hourly.length === 0 ? (
+        <p className="py-2 font-mono text-[11px] text-graphite">
+          // sin datos en el rango seleccionado
+        </p>
+      ) : (
+        <>
+          <svg
+            viewBox={`0 0 ${W} ${H}`}
+            className="w-full text-ink"
+            preserveAspectRatio="none"
+            aria-hidden
+          >
+            {hourly.map((b, i) => {
+              const h = peakCount > 0 ? (b.count / peakCount) * H : 0;
+              return (
+                <rect
+                  key={i}
+                  x={i * slot}
+                  y={H - h}
+                  width={Math.max(0.5, slot * 0.85)}
+                  height={Math.max(b.count > 0 ? 1 : 0, h)}
+                  fill="currentColor"
+                  opacity={i === peakIdx ? 1 : 0.32}
+                />
+              );
+            })}
+          </svg>
+          <div className="relative h-3 font-mono text-[10px] uppercase tracking-wider text-graphite">
+            {ticks.map((t, i) => (
+              <span
+                key={i}
+                className="absolute whitespace-nowrap"
+                style={{
+                  left: `${t.x}%`,
+                  transform:
+                    i === 0
+                      ? "translateX(0)"
+                      : i === ticks.length - 1
+                        ? "translateX(-100%)"
+                        : "translateX(-50%)",
+                }}
+              >
+                {t.label}
+              </span>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
+}
+
+function formatTick(iso: string, range: Range): string {
+  const d = new Date(iso);
+  if (range === "24h") {
+    return `${String(d.getHours()).padStart(2, "0")}:00`;
+  }
+  return d.toLocaleDateString("es-AR", { day: "numeric", month: "short" });
+}
+
+function formatPeak(iso: string, range: Range): string {
+  const d = new Date(iso);
+  if (range === "24h") {
+    return `${String(d.getHours()).padStart(2, "0")}:00`;
+  }
+  return d.toLocaleDateString("es-AR", { day: "numeric", month: "short" });
 }

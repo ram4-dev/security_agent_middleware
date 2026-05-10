@@ -2,6 +2,7 @@
 /* eslint-disable react/jsx-no-comment-textnodes */
 import { getAdminSession } from "@/lib/admin-session";
 import { prisma } from "@/lib/prisma";
+import { padHourly } from "@/lib/volume-buckets";
 import { AnalyticsPanel } from "./_components/analytics-panel";
 
 export const dynamic = "force-dynamic";
@@ -70,7 +71,7 @@ export default async function AnalyticsPage() {
       WARN:   actionMap["WARN"]   ?? { count: 0, avgLatencyMs: 0 },
       LOG:    actionMap["LOG"]    ?? { count: 0, avgLatencyMs: 0 },
     },
-    hourly: hourlyRows.map((r) => ({ hour: r.hour.toISOString(), count: Number(r.count) })),
+    hourly: padHourly(hourlyRows, since7d),
     topPolicies: topPoliciesRows.map((r) => ({ slug: r.slug, count: Number(r.count) })),
   };
 
