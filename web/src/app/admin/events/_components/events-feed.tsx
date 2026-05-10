@@ -116,12 +116,14 @@ export function EventsFeed({ initialEvents }: { initialEvents: EventDTO[] }) {
 }
 
 const MESSAGE_PREVIEW_LEN = 240;
+const PROMPT_PREVIEW_LEN = 280;
 
 function EventCard({ event: e }: { event: EventDTO }) {
-  const [showRaw, setShowRaw] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const headline = summarizeHits(e.action, e.policyHits);
   const userMessage = extractLastUserMessage(e.prompt);
-  const truncatable = userMessage.text.length > MESSAGE_PREVIEW_LEN;
+  const messageTruncatable = userMessage.text.length > MESSAGE_PREVIEW_LEN;
+  const promptTruncatable = e.prompt.length > PROMPT_PREVIEW_LEN;
 
   return (
     <li
@@ -139,7 +141,7 @@ function EventCard({ event: e }: { event: EventDTO }) {
       </div>
 
       <blockquote className="mt-3 whitespace-pre-wrap break-words border-l-2 border-graphite-dark/25 pl-3 text-sm text-ink">
-        {`“${truncatable ? truncate(userMessage.text, MESSAGE_PREVIEW_LEN) : userMessage.text}”`}
+        {`“${messageTruncatable ? truncate(userMessage.text, MESSAGE_PREVIEW_LEN) : userMessage.text}”`}
       </blockquote>
       {userMessage.boilerplateOnly ? (
         <p className="mt-1 pl-3 font-mono text-[10px] uppercase tracking-wider text-graphite">
@@ -157,21 +159,25 @@ function EventCard({ event: e }: { event: EventDTO }) {
         <span className="truncate">trace {e.traceId.slice(0, 12)}…</span>
       </div>
 
-      <button
-        type="button"
-        onClick={() => setShowRaw((v) => !v)}
-        className="mt-1.5 font-mono text-[10px] uppercase tracking-wider text-graphite transition-colors hover:text-ink"
-      >
-        // {showRaw ? "ocultar contexto completo" : "ver contexto completo"}
-      </button>
-      {showRaw ? (
+      <div className="mt-3">
         <pre
-          className="mt-2 whitespace-pre-wrap break-words bg-paper-soft/40 p-3 font-mono text-[11px] leading-relaxed text-graphite-dark"
+          className={`whitespace-pre-wrap break-words bg-paper-soft/40 p-3 font-mono text-[11px] leading-relaxed text-graphite-dark transition-all ${
+            expanded ? "" : "max-h-32 overflow-hidden"
+          }`}
           style={{ borderRadius: "var(--radius)" }}
         >
-          {e.prompt}
+          {expanded ? e.prompt : truncate(e.prompt, PROMPT_PREVIEW_LEN)}
         </pre>
-      ) : null}
+        {promptTruncatable && (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="mt-1.5 font-mono text-[10px] uppercase tracking-wider text-graphite transition-colors hover:text-ink"
+          >
+            // {expanded ? "cerrar contexto" : "expandir contexto completo"}
+          </button>
+        )}
+      </div>
     </li>
   );
 }
