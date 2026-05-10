@@ -40,7 +40,7 @@ export default async function AdminLayout({
     <div
       data-admin-shell
       data-theme={theme}
-      className="min-h-screen bg-paper text-ink"
+      className="flex h-svh flex-col overflow-hidden bg-paper text-ink"
     >
       <AdminShell
         email={email}

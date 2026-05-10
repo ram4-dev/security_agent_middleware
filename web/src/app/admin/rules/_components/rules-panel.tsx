@@ -348,9 +348,12 @@ function Field({
   );
 }
 
-// Monochrome ActionTag — severity reads as text weight + a 4px left bar
-// that darkens with severity. Functional color is reserved for the live
-// events feed (see identidad/design.md § 6).
+// ActionTag — functional color tint (BLOCK red, REDACT amber, WARN
+// orange, LOG zinc) layered on top of the weight gradient
+// (LOG 400 → BLOCK 700) so severity scans both with and without color
+// recognition. design.md § 6 authorises this on monitoring/operational
+// surfaces; configuration screens like this one share the same pill so
+// the admin doesn't have to relearn the visual language between tabs.
 function ActionTag({ action }: { action: RuleDTO["defaultAction"] }) {
   const weight: Record<RuleDTO["defaultAction"], string> = {
     LOG: "font-normal",
@@ -359,13 +362,21 @@ function ActionTag({ action }: { action: RuleDTO["defaultAction"] }) {
     BLOCK: "font-bold",
   };
   const indicator: Record<RuleDTO["defaultAction"], string> = {
-    LOG: "bg-graphite",
-    WARN: "bg-graphite-dark",
-    REDACT: "bg-ink/80",
-    BLOCK: "bg-ink",
+    LOG: "bg-zinc-500/70",
+    WARN: "bg-orange-500/80",
+    REDACT: "bg-amber-500/80",
+    BLOCK: "bg-red-600/80",
+  };
+  const text: Record<RuleDTO["defaultAction"], string> = {
+    LOG: "text-zinc-700",
+    WARN: "text-orange-700",
+    REDACT: "text-amber-700",
+    BLOCK: "text-red-700",
   };
   return (
-    <span className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-ink">
+    <span
+      className={`inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider ${text[action]}`}
+    >
       <span aria-hidden className={`h-3.5 w-1 ${indicator[action]}`} />
       <span className={weight[action]}>{action}</span>
     </span>
