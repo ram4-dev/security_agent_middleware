@@ -29,10 +29,8 @@ export function AdminShell({
 }: AdminShellProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const current = NAV_ITEMS.find((i) =>
-    "exact" in i && i.exact
-      ? pathname === i.href
-      : pathname === i.href || pathname.startsWith(i.href + "/"),
+  const current = NAV_ITEMS.find(
+    (i) => pathname === i.href || pathname.startsWith(i.href + "/"),
   );
   const breadcrumb = current?.label ?? "admin";
 
@@ -53,7 +51,7 @@ export function AdminShell({
 
   return (
     <>
-      <header className="sticky top-0 z-30 border-b border-graphite-dark/15 bg-paper/85 backdrop-blur supports-[backdrop-filter]:bg-paper/70">
+      <header className="shrink-0 border-b border-graphite-dark/15 bg-paper/85 backdrop-blur supports-[backdrop-filter]:bg-paper/70">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-6 py-4">
           <div className="flex items-center gap-3">
             <button
@@ -152,10 +150,14 @@ export function AdminShell({
         ) : null}
       </AnimatePresence>
 
-      <div className="mx-auto flex max-w-6xl items-start gap-8 px-6 py-8 md:py-14">
-        {/* Sticky sidebar — stays in place while the main column scrolls.
-            Top offset (~73px) clears the sticky header. */}
-        <aside className="sticky top-[73px] hidden w-44 shrink-0 flex-col gap-10 self-start md:flex">
+      {/* Viewport-bound shell: the row below fills the remaining viewport
+          height (header is the only other flex child). Aside and main
+          are siblings that each carry their own overflow when the
+          content actually needs to scroll. min-h-0 on the row is the
+          flex-child trick that lets the inner overflow-y-auto take
+          effect — without it the children grow forever. */}
+      <div className="mx-auto flex w-full max-w-6xl min-h-0 flex-1 gap-8 px-6">
+        <aside className="hidden w-44 shrink-0 flex-col gap-8 overflow-hidden py-8 md:flex md:py-10">
           <AdminNav />
           {themeSwitcher}
           <p className="mt-auto font-mono text-[11px] leading-relaxed text-graphite">
@@ -164,7 +166,7 @@ export function AdminShell({
             // {authConfigured ? "google session" : "demo session"}
           </p>
         </aside>
-        <main className="flex min-w-0 flex-1 flex-col gap-6">
+        <main className="flex min-w-0 flex-1 flex-col gap-5 overflow-y-auto py-8 md:py-10">
           <Breadcrumb section={breadcrumb} />
           <div className="flex flex-1 flex-col">{children}</div>
         </main>
