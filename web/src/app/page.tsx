@@ -11,6 +11,7 @@ import {
 } from "@/components/ui";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion";
 
+import { CascadeDemo } from "./_components/cascade-demo";
 import { Hero } from "./_components/hero";
 import { SiteHeader, Wordmark } from "./_components/site-header";
 
@@ -259,97 +260,13 @@ function HowItWorksSection() {
         </Stagger>
 
         <Reveal>
-          <Cascade />
+          <CascadeDemo />
         </Reveal>
         <Reveal delay={0.2}>
           <ActionsLegend />
         </Reveal>
       </div>
     </section>
-  );
-}
-
-function Cascade() {
-  const steps = [
-    {
-      n: "1",
-      name: "Regex",
-      latency: "~5 ms",
-      example: "emails · tarjetas · AWS keys · JWTs",
-    },
-    {
-      n: "2",
-      name: "Pattern",
-      latency: "~20 ms",
-      example: ".env · id_rsa · *.pem · paths internos",
-    },
-    {
-      n: "3",
-      name: "Haiku judge",
-      latency: "~150 ms",
-      example: "reglas en lenguaje natural · contexto",
-    },
-  ];
-
-  return (
-    <div
-      className="border border-graphite-dark/20 p-6 md:p-10"
-      style={{ borderRadius: "var(--radius)" }}
-    >
-      <div className="mb-8 flex flex-wrap items-baseline justify-between gap-4">
-        <span className="font-mono text-xs uppercase tracking-wider text-graphite">
-          // cascada de detección
-        </span>
-        <span className="font-mono text-xs uppercase tracking-wider text-ink">
-          presupuesto · &lt; 200 ms p95
-        </span>
-      </div>
-      <div className="grid items-stretch gap-px bg-graphite-dark/15 md:grid-cols-[1fr_auto_1fr_auto_1fr]">
-        <CascadeCell {...steps[0]} />
-        <Arrow />
-        <CascadeCell {...steps[1]} />
-        <Arrow />
-        <CascadeCell {...steps[2]} />
-      </div>
-      <p className="mt-6 max-w-3xl font-mono text-xs leading-relaxed text-graphite">
-        // si una capa más barata ya decidió, no se llama a la siguiente. Costo
-        y latencia importan.
-      </p>
-    </div>
-  );
-}
-
-function CascadeCell({
-  n,
-  name,
-  latency,
-  example,
-}: {
-  n: string;
-  name: string;
-  latency: string;
-  example: string;
-}) {
-  return (
-    <div className="flex flex-col gap-2 bg-paper p-5">
-      <div className="flex items-baseline gap-3 font-mono text-sm">
-        <span className="text-graphite">capa {n}</span>
-        <span className="text-base font-medium text-ink">{name}</span>
-      </div>
-      <span className="font-mono text-sm text-graphite-dark">{latency}</span>
-      <p className="font-mono text-xs leading-relaxed text-graphite-dark">
-        {example}
-      </p>
-    </div>
-  );
-}
-
-function Arrow() {
-  return (
-    <div className="flex items-center justify-center bg-paper px-2 py-2 font-mono text-graphite md:px-3">
-      <span aria-hidden>→</span>
-      <span className="sr-only">luego</span>
-    </div>
   );
 }
 
