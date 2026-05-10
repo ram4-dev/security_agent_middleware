@@ -5,8 +5,7 @@ import Link from "next/link";
 import { isAuthConfigured, signOut } from "@/auth";
 import { ensureAdminSession } from "@/lib/admin-session";
 import { readThemeCookie } from "@/lib/theme";
-import { TranqueraMark } from "@/components/brand/tranquera-mark";
-import { AdminNav } from "./_components/nav";
+import { AdminShell } from "./_components/admin-shell";
 import { ThemeSwitcher } from "./_components/theme-switcher";
 
 export default async function AdminLayout({
@@ -38,38 +37,20 @@ export default async function AdminLayout({
   }
 
   return (
-    <div data-admin-shell data-theme={theme} className="min-h-screen bg-paper text-ink">
-      <header className="sticky top-0 z-30 border-b border-graphite-dark/15 bg-paper/85 backdrop-blur supports-[backdrop-filter]:bg-paper/70">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-3">
-            <TranqueraMark className="h-6 w-6" />
-            <span className="text-xl font-semibold lowercase tracking-tight">
-              tranquera
-            </span>
-            <span className="ml-3 border-l border-graphite-dark/20 pl-3 font-mono text-xs uppercase tracking-wider text-graphite">
-              admin
-            </span>
-          </Link>
-          <div className="flex items-center gap-4 font-mono text-xs uppercase tracking-wider text-graphite">
-            <span>// org · {orgId}</span>
-            <span className="hidden md:inline">// {email}</span>
-            {isAuthConfigured() ? <SignOutButton /> : null}
-          </div>
-        </div>
-      </header>
-
-      <div className="mx-auto flex max-w-6xl gap-8 px-6 py-10 md:py-14">
-        <aside className="flex w-44 shrink-0 flex-col gap-10">
-          <AdminNav />
-          <ThemeSwitcher initial={theme} />
-          <p className="mt-auto font-mono text-[11px] leading-relaxed text-graphite">
-            // org · {orgId}
-            <br />
-            // {isAuthConfigured() ? "google session" : "demo session"}
-          </p>
-        </aside>
-        <main className="min-w-0 flex-1">{children}</main>
-      </div>
+    <div
+      data-admin-shell
+      data-theme={theme}
+      className="min-h-screen bg-paper text-ink"
+    >
+      <AdminShell
+        email={email}
+        orgId={orgId}
+        authConfigured={isAuthConfigured()}
+        signOut={isAuthConfigured() ? <SignOutButton /> : null}
+        themeSwitcher={<ThemeSwitcher initial={theme} />}
+      >
+        {children}
+      </AdminShell>
     </div>
   );
 }
@@ -118,7 +99,7 @@ function SignOutButton() {
     >
       <button
         type="submit"
-        className="border border-graphite-dark/30 px-2 py-1 transition-colors hover:border-ink hover:text-ink"
+        className="border border-graphite-dark/35 px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider text-graphite transition-colors hover:border-ink hover:text-ink"
         style={{ borderRadius: "var(--radius)" }}
       >
         salir
