@@ -59,8 +59,20 @@ function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+// ── CLI args ────────────────────────────────────────────────────────────────
+function parseArgs(argv) {
+  const out = { policiesOnly: false, orgId: null };
+  for (const a of argv) {
+    if (a === "--policies-only") out.policiesOnly = true;
+    else if (a.startsWith("--org-id=")) out.orgId = a.slice("--org-id=".length);
+  }
+  return out;
+}
+
+const CLI = parseArgs(process.argv.slice(2));
+
 // ── data definitions ────────────────────────────────────────────────────────
-const ORG_ID = "demo";
+const ORG_ID = CLI.orgId ?? "demo";
 
 const POLICIES = [
   // ── Regex / credentials ────────────────────────────────────────────────────
@@ -995,7 +1007,43 @@ async function main() {
   await pool.end();
 }
 
-main().catch((err) => {
+async function seedPoliciesOnly(orgId) {
+  console.log(`🌱 Tranquera — sembrando solo policies en org "${orgId}"...\n`);
+
+  const orgRow = await db.query(`SELECT id FROM organizations WHERE id = $1`, [orgId]);
+  if (orgRow.rowCount === 0) {
+    throw new Error(`org "${orgId}" no existe. Logueate primero o pasá un --org-id válido.`);
+  }
+
+  console.log("🗑️  Borrando policies y rule_suggestions previas de la org...");
+  await db.query(`DELETE FROM rule_suggestions WHERE org_id = $1`, [orgId]);
+  await db.query(`DELETE FROM policies WHERE org_id = $1`, [orgId]);
+  console.log("   ✓ ok\n");
+
+  console.log("📋 Insertando políticas...");
+  for (const p of POLICIES) {
+    const id = uuid();
+    const matchConfig = p.matchConfig ? JSON.stringify(p.matchConfig) : null;
+    await db.query(
+      `INSERT INTO policies
+         (id, org_id, slug, domain, layer, rule, pattern, match_config,
+          default_action, severity, source, is_active, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11,$12,NOW(),NOW())`,
+      [
+        id, orgId, p.slug, p.domain, p.layer, p.rule,
+        p.pattern ?? null, matchConfig,
+        p.defaultAction, p.severity, "seed", true,
+      ],
+    );
+    console.log(`   ✓ ${p.slug} [${p.layer}/${p.domain}]`);
+  }
+
+  console.log(`\n✅ Listo. ${POLICIES.length} policies insertadas en "${orgId}".`);
+  await pool.end();
+}
+
+const entrypoint = CLI.policiesOnly ? seedPoliciesOnly(ORG_ID) : main();
+entrypoint.catch((err) => {
   console.error("❌ Seed falló:", err);
   pool.end();
   process.exit(1);
