@@ -12,6 +12,8 @@ import { Reveal, Stagger, StaggerItem } from "@/components/motion";
 import { CascadeDemo } from "./_components/cascade-demo";
 import { Hero } from "./_components/hero";
 import { InstallTerminal } from "./_components/install-terminal";
+import { MagnetCta } from "./_components/magnet-cta";
+import { ManifestoEmphasis } from "./_components/manifesto-emphasis";
 import { SiteHeader, Wordmark } from "./_components/site-header";
 import { TraceDemo } from "./_components/trace-demo";
 
@@ -513,10 +515,8 @@ function ManifestoSection() {
             <p className="max-w-3xl text-2xl font-medium leading-snug md:text-3xl">
               No es vigilancia. No es un escudo. Es el punto donde el dev, la
               org y el modelo quedan{" "}
-              <em className="not-italic underline decoration-graphite underline-offset-[10px]">
-                alineados
-              </em>{" "}
-              — sin interrumpir el ritmo de quien escribe.
+              <ManifestoEmphasis>alineados</ManifestoEmphasis> — sin
+              interrumpir el ritmo de quien escribe.
             </p>
           </div>
         </Reveal>
@@ -583,9 +583,7 @@ function FinalCta() {
           </h2>
         </Reveal>
         <Reveal delay={0.15} className="flex flex-wrap items-center gap-4">
-          <Button href="/admin/login" variant="solid" tone="ink" size="lg" arrow>
-            Entrar al admin
-          </Button>
+          <MagnetCta href="/admin/login">Entrar al admin</MagnetCta>
           <Button
             href={REPO_URL}
             external
@@ -628,14 +626,26 @@ function SiteFooter() {
               href={`https://github.com/${t.gh}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex flex-col gap-1"
+              className="group flex items-start gap-3"
             >
-              <span className="text-sm text-ink transition-colors group-hover:text-graphite-dark">
-                {t.name}
-              </span>
-              <span className="font-mono text-xs text-graphite transition-colors group-hover:text-ink">
-                @{t.gh}
-              </span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`https://github.com/${t.gh}.png?size=80`}
+                alt=""
+                width={40}
+                height={40}
+                loading="lazy"
+                className="h-10 w-10 shrink-0 grayscale transition-all duration-300 group-hover:grayscale-0"
+                style={{ borderRadius: "var(--radius)" }}
+              />
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <span className="truncate text-sm text-ink transition-colors group-hover:text-graphite-dark">
+                  {t.name}
+                </span>
+                <span className="truncate font-mono text-xs text-graphite transition-colors group-hover:text-ink">
+                  @{t.gh}
+                </span>
+              </div>
             </a>
           ))}
         </div>
