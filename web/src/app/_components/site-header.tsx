@@ -1,6 +1,7 @@
 /* eslint-disable react/jsx-no-comment-textnodes */
-import Image from "next/image";
 import Link from "next/link";
+
+import { TranqueraMark as BrandMark } from "@/components/brand/tranquera-mark";
 
 const REPO_URL = "https://github.com/platanus-hack/platanus-hack-26-ar-team-22";
 
@@ -67,17 +68,7 @@ export function Wordmark({ size = "sm" }: { size?: "sm" | "lg" }) {
 }
 
 export function TranqueraMark({ className = "" }: { className?: string }) {
-  // Tamaños raster grandes para que la versión hero (h-24 w-24) se vea
-  // nítida en pantallas retina.
-  return (
-    <Image
-      src="/logo.png"
-      alt="Tranquera"
-      width={256}
-      height={256}
-      priority
-      className={`${className} object-contain`}
-      style={{ borderRadius: "var(--radius)" }}
-    />
-  );
+  // Re-exported for back-compat with existing imports; the actual SVG lives
+  // in `@/components/brand/tranquera-mark`.
+  return <BrandMark className={className} />;
 }

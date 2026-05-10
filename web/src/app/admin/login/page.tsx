@@ -2,12 +2,12 @@
 // configurado — sino el proxy nunca redirige acá (cae al cookie demo).
 /* eslint-disable react/jsx-no-comment-textnodes */
 
-import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, isAuthConfigured, signIn } from "@/auth";
 import { SiteHeader } from "@/app/_components/site-header";
 import { GridBackdrop } from "@/app/_components/grid-backdrop";
+import { TranqueraMark } from "@/components/brand/tranquera-mark";
 
 const REPO_URL = "https://github.com/platanus-hack/platanus-hack-26-ar-team-22";
 
@@ -138,19 +138,6 @@ export default async function LoginPage({
         </div>
       </main>
     </div>
-  );
-}
-
-function TranqueraMark({ className = "" }: { className?: string }) {
-  return (
-    <Image
-      src="/logo.png"
-      alt="Tranquera"
-      width={64}
-      height={64}
-      className={`${className} object-contain`}
-      style={{ borderRadius: "var(--radius)" }}
-    />
   );
 }
 

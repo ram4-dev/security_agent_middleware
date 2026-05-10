@@ -1,10 +1,10 @@
 // Admin shell. Sidebar + header + main slot. Server component — the proxy
 // (src/proxy.ts) has already gated access by the time we render here.
 /* eslint-disable react/jsx-no-comment-textnodes */
-import Image from "next/image";
 import Link from "next/link";
 import { isAuthConfigured, signOut } from "@/auth";
 import { ensureAdminSession } from "@/lib/admin-session";
+import { TranqueraMark } from "@/components/brand/tranquera-mark";
 import { AdminNav } from "./_components/nav";
 
 export default async function AdminLayout({
@@ -123,15 +123,3 @@ function SignOutButton() {
   );
 }
 
-function TranqueraMark({ className = "" }: { className?: string }) {
-  return (
-    <Image
-      src="/logo.png"
-      alt="Tranquera"
-      width={64}
-      height={64}
-      className={`${className} object-contain`}
-      style={{ borderRadius: "var(--radius)" }}
-    />
-  );
-}
