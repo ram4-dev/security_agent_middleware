@@ -2,6 +2,7 @@
 /* eslint-disable react/jsx-no-comment-textnodes */
 
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { EventDTO, PolicyHitRecord } from "@/lib/events";
 
@@ -15,9 +16,19 @@ const ACTION_STYLES: Record<EventDTO["action"], string> = {
   LOG: "bg-zinc-500/10 text-zinc-700",
 };
 
+function isAction(v: string | null): v is EventDTO["action"] {
+  return v === "BLOCK" || v === "REDACT" || v === "WARN" || v === "LOG";
+}
+
 export function EventsFeed({ initialEvents }: { initialEvents: EventDTO[] }) {
+  const searchParams = useSearchParams();
+  const initialFilter = (() => {
+    const a = searchParams.get("action");
+    return isAction(a) ? a : "";
+  })();
+
   const [events, setEvents] = useState(initialEvents);
-  const [filter, setFilter] = useState<"" | EventDTO["action"]>("");
+  const [filter, setFilter] = useState<"" | EventDTO["action"]>(initialFilter);
   const [paused, setPaused] = useState(false);
   const [lastPoll, setLastPoll] = useState<Date | null>(null);
   const newestRef = useRef<string | null>(initialEvents[0]?.createdAt ?? null);

@@ -6,3 +6,4 @@ export { Pane } from "./pane";
 export { Field, fieldInputClass, fieldTextareaClass } from "./field";
 export { EmptyState } from "./empty-state";
 export { KvLine } from "./kv-line";
+export { Sparkline } from "./sparkline";

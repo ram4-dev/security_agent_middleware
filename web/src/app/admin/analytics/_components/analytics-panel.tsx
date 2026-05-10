@@ -1,7 +1,10 @@
 "use client";
 /* eslint-disable react/jsx-no-comment-textnodes */
 
-import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+import { Sparkline } from "@/components/ui";
 
 type ActionStats = { count: number; avgLatencyMs: number };
 type AnalyticsData = {
@@ -150,6 +153,9 @@ export function AnalyticsPanel({ initial }: { initial: AnalyticsData }) {
         )}
       </div>
 
+      {/* Hourly volume — gives the eye a "today vs. earlier" before drilling in */}
+      <HourlyVolume hourly={data.hourly} />
+
       {/* Secondary KPIs */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <KpiCard label="total requests" value={data.total.toLocaleString("es-AR")} />
@@ -174,12 +180,18 @@ export function AnalyticsPanel({ initial }: { initial: AnalyticsData }) {
             const stats = data.byAction[action];
             const pct = (stats.count / maxAction) * 100;
             const style = ACTION_STYLES[action];
-            return (
-              <div key={action} className="flex items-center gap-3">
-                <span className={`w-14 font-mono text-[11px] font-semibold uppercase ${style.text}`}>
+            const filterable = stats.count > 0;
+            const row = (
+              <div className="flex items-center gap-3">
+                <span
+                  className={`w-14 font-mono text-[11px] uppercase ${style.text}`}
+                >
                   {action}
                 </span>
-                <div className="relative h-2 flex-1 bg-paper-soft/60" style={{ borderRadius: "2px" }}>
+                <div
+                  className="relative h-2 flex-1 bg-paper-soft/60"
+                  style={{ borderRadius: "2px" }}
+                >
                   <div
                     className={`absolute inset-y-0 left-0 ${style.bar} transition-all duration-500`}
                     style={{ width: `${pct}%`, borderRadius: "2px" }}
@@ -191,6 +203,28 @@ export function AnalyticsPanel({ initial }: { initial: AnalyticsData }) {
                 <span className="hidden w-20 text-right font-mono text-[11px] text-graphite sm:block">
                   ~{stats.avgLatencyMs} ms
                 </span>
+                <span
+                  aria-hidden
+                  className={`hidden font-mono text-[11px] sm:inline ${
+                    filterable ? "text-graphite" : "text-transparent"
+                  }`}
+                >
+                  →
+                </span>
+              </div>
+            );
+            return filterable ? (
+              <Link
+                key={action}
+                href={`/admin/events?action=${action}`}
+                className="-mx-2 rounded px-2 py-1 transition-colors hover:bg-paper-soft/60"
+                title={`ver eventos · ${action}`}
+              >
+                {row}
+              </Link>
+            ) : (
+              <div key={action} className="px-2 py-1">
+                {row}
               </div>
             );
           })}
@@ -244,6 +278,37 @@ function KpiCard({ label, value }: { label: string; value: string }) {
       <span className="text-2xl font-semibold tracking-tight text-ink">
         {value}
       </span>
+    </div>
+  );
+}
+
+function HourlyVolume({
+  hourly,
+}: {
+  hourly: { hour: string; count: number }[];
+}) {
+  // Normalise to a fixed number of buckets so the chart doesn't squash
+  // wildly when the range changes. We pad zeros at the start.
+  const buckets = useMemo(() => {
+    const values = hourly.map((h) => h.count);
+    return values;
+  }, [hourly]);
+  const total = buckets.reduce((a, b) => a + b, 0);
+  const peak = buckets.length > 0 ? Math.max(...buckets) : 0;
+  return (
+    <div
+      className="flex flex-col gap-3 border border-graphite-dark/15 bg-paper p-5"
+      style={{ borderRadius: "var(--radius)" }}
+    >
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <span className="font-mono text-[11px] uppercase tracking-wider text-graphite">
+          // volumen por hora
+        </span>
+        <span className="font-mono text-[11px] uppercase tracking-wider text-graphite">
+          {total.toLocaleString("es-AR")} requests · pico {peak} / hora
+        </span>
+      </div>
+      <Sparkline values={buckets} variant="bars" height={36} className="text-ink" />
     </div>
   );
 }
