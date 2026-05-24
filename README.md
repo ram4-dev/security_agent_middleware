@@ -6,7 +6,7 @@
 
 <p align="center"><em>Un paso controlado entre la intención y la respuesta.</em></p>
 
-**Tranquera** resuelve el problema de **alineamiento organizacional de agentes AI**: Claude Code está alineado con los valores de Anthropic, pero no con las políticas de la empresa que lo despliega. Tranquera es la capa intermedia que cierra esa brecha — un proxy modificable que aplica reglas no-code en runtime con una cascada **Regex → Pattern → Haiku judge** de menos de 200 ms de overhead, con cuatro acciones explícitas: `BLOCK · REDACT · WARN · LOG`. El compliance officer (no técnico) especifica las políticas en lenguaje natural con un visual builder; el dev usa Claude Code igual que siempre; un AI Suggestor cierra el loop proponiendo nuevas reglas a partir de los patrones que están pasando bajo el radar.
+**Tranquera** resuelve el problema de **alineamiento organizacional de agentes AI**: Claude Code está alineado con los valores de Anthropic, pero no con las políticas de la empresa que lo despliega. Tranquera es la capa intermedia que cierra esa brecha — un proxy modificable que aplica reglas no-code en runtime con una cascada **Regex → Pattern → LLM judge multiprovider** de menos de 200 ms de overhead, con cuatro acciones explícitas: `BLOCK · REDACT · WARN · LOG`. El compliance officer (no técnico) especifica las políticas en lenguaje natural con un visual builder; el dev usa Claude Code igual que siempre; un AI Suggestor cierra el loop proponiendo nuevas reglas a partir de los patrones que están pasando bajo el radar.
 
 — Track **AI Security** · Platanus Hack 26 · Buenos Aires · Team 22.
 
@@ -89,7 +89,7 @@ Tranquera es una aduana silenciosa, siempre encendida, que aplica las reglas de 
 ```mermaid
 flowchart BT
   L1["LAYER 1 · Claude Code (developer machine)<br/>npx tranquera setup → device flow Google →<br/>shell rc con ANTHROPIC_BASE_URL=&lt;proxy&gt;/cli/&lt;token&gt;"]
-  L2["LAYER 2 · Interceptor Engine (FastAPI · Python 3.12)<br/>Cascada Regex → Pattern → Haiku · &lt;200 ms p50<br/>Acciones BLOCK · REDACT · WARN · LOG<br/>Atribución por dev via path-based token"]
+  L2["LAYER 2 · Interceptor Engine (FastAPI · Python 3.12)<br/>Cascada Regex → Pattern → LLM judge · &lt;200 ms p50<br/>Acciones BLOCK · REDACT · WARN · LOG<br/>Atribución por dev via path-based token"]
   L3["LAYER 3 · Admin Backoffice (Next.js 16)<br/>Visual rule builder (no-code)<br/>/admin/events · /rules · /analytics · /team · /suggestions"]
   L4["LAYER 4 · AI Suggestor<br/>Cron diario + manual trigger<br/>Haiku propone reglas a partir de LOGs → approval queue"]
 
@@ -122,7 +122,7 @@ flowchart TB
   Req(["dev escribe en Claude Code<br/>POST /cli/{token}/v1/messages"])
   L1{"Layer 1 · Regex<br/>~5 ms"}
   L2{"Layer 2 · Pattern<br/>~20 ms · roadmap"}
-  L3{"Layer 3 · Haiku judge<br/>~150 ms"}
+  L3{"Layer 3 · LLM judge<br/>~150 ms"}
   Decide["acción ganadora<br/>BLOCK ▸ REDACT ▸ WARN ▸ LOG"]
 
   Block["BLOCK<br/>Message sintético al dev"]
@@ -168,7 +168,7 @@ sequenceDiagram
     participant CC as Claude Code
     participant Px as Tranquera Proxy
     participant DB as Postgres
-    participant H as Haiku 4.5
+    participant H as Judge LLM
     participant A as api.anthropic.com
 
     CC->>Px: POST /cli/{token}/v1/messages
@@ -196,7 +196,7 @@ sequenceDiagram
 
 La tentación obvia es tirarle el prompt entero a un modelo y preguntar "¿esto está bien?". No escala: agrega ~150 ms a cada request, cuesta plata por prompt, y mete un punto de falla LLM en el camino crítico del dev.
 
-Tranquera aplica el principio **"cascada antes que LLM"**: regex y patrones resuelven el 90 %+ de los casos en milisegundos; el judge LLM solo se invoca cuando los layers baratos no decidieron y hay reglas en lenguaje natural activas. Si el judge falla (timeout, rate limit, error de API) el sistema **fail-open con flag**: deja pasar pero loggea `reason: "haiku_unavailable"` para que el admin no se quede ciego ni el dev parado.
+Tranquera aplica el principio **"cascada antes que LLM"**: regex y patrones resuelven el 90 %+ de los casos en milisegundos; el judge LLM solo se invoca cuando los layers baratos no decidieron y hay reglas en lenguaje natural activas. Si el judge falla (timeout, rate limit, error de API) el sistema **fail-open con warning**: deja pasar y loggea el problema sin imprimir secrets, para que el admin no se quede ciego ni el dev parado.
 
 ### 02 · Reglas en lenguaje natural, sin saber regex
 
@@ -210,7 +210,7 @@ El admin puede escribir literalmente *"no menciones nombres de clientes en los p
 //          (ACME, Globant, Galicia, etc.) ni sus emails internos"
 ```
 
-El judge recibe todas las reglas NL activas en una sola call con prompt caching de Anthropic, así el costo marginal por prompt se mantiene bajo. El schema ya tiene columnas `vector(1536)` (Postgres + `pgvector`) listas para que cuando el set de reglas crezca, se filtre por similitud antes de invocar al judge — la mecánica está implementada, el pre-filter por embeddings queda como optimización siguiente (ver `specs/02-vdb-bootstrap.md`).
+El judge recibe todas las reglas NL activas en una sola call server-side. Hoy puede correr con Anthropic, OpenCode Go, OpenAI o Gemini según `JUDGE_PROVIDER`, manteniendo el mismo contrato `PolicyHit` para la cascada. El schema ya tiene columnas `vector(1536)` (Postgres + `pgvector`) listas para que cuando el set de reglas crezca, se filtre por similitud antes de invocar al judge — la mecánica está implementada, el pre-filter por embeddings queda como optimización siguiente (ver `specs/02-vdb-bootstrap.md`).
 
 ### 03 · Atribución por dev sin tocar la máquina
 
@@ -290,7 +290,7 @@ pnpm dev                          # http://localhost:3000
 # 3. Interceptor (otra terminal)
 cd interceptor
 cp .env.example .env
-# .env — ANTHROPIC_JUDGE_API_KEY de console.anthropic.com
+# .env — JUDGE_PROVIDER/JUDGE_API_KEY opcional para reglas NL
 uv sync
 uv run python scripts/seed_policies.py        # 4 reglas regex de credenciales
 uv run uvicorn app.main:app --reload --port 8080
@@ -348,14 +348,14 @@ platanus-hack-26-ar-team-22/
 
 | Capa | Tech | Por qué |
 |---|---|---|
-| Judge LLM | **Anthropic Claude Haiku 4.5** | Latencia + costo bajos, prompt caching activo |
+| Judge LLM | **Anthropic / OpenCode Go / OpenAI / Gemini** vía `JUDGE_PROVIDER` | Provider server-side configurable; la cascada solo consume `PolicyHit[]` |
 | Embeddings (Suggestor) | **OpenAI `text-embedding-3-small`** o **Voyage `voyage-3-lite`** | Free tier suficiente, calidad sobrada para clustering |
 | DB | **Postgres 16 + `pgvector`** | Local: `docker compose up`. Prod: Railway / Supabase. Mismo cliente. |
 | ORM | **Prisma 7** con `@prisma/adapter-pg` | Tipos generados, migraciones declarativas; vector field con `Unsupported("vector(1536)")` |
 | Auth (admin) | **Auth.js v5 + Google OAuth** | Magic-less, sesiones JWT, callback resuelve org |
 | Auth (CLI) | **Device flow** custom contra el back-office | El CLI nunca ve credenciales de Google directamente |
 | Frontend | **Next.js 16 (App Router)** + **Tailwind v4** + **IBM Plex Sans/Mono** | Standard, deploy directo a Vercel |
-| Interceptor | **Python 3.12 + FastAPI + httpx async + SQLModel** | Run-time de larga vida con prompt-cache de Haiku activo |
+| Interceptor | **Python 3.12 + FastAPI + httpx async + SQLModel** | Runtime de larga vida con cascada y judge LLM server-side configurable |
 | Hosting (web) | **Vercel** | Preview por PR, auto-deploy de `main` a prod, **Vercel Cron** para el Suggestor |
 | Hosting (interceptor) | **Railway** | Container con runtime persistente, latencia <200 ms p50 |
 | Package managers | **pnpm** (web/cli) · **uv** (interceptor) | — |
@@ -383,7 +383,7 @@ Hack en curso · Buenos Aires · 2026.
 |---|---|
 | Interceptor — Layer 1 (regex) | shipped — BLOCK + REDACT + LOG/WARN passthrough |
 | Interceptor — Layer 2 (pattern) | roadmap (`interceptor/README.md`) |
-| Interceptor — Layer 3 (Haiku judge) | shipped — BLOCK + LOG; reglas NL viajan completas, fail-open con flag |
+| Interceptor — Layer 3 (LLM judge multiprovider) | shipped — Anthropic legacy + OpenCode Go/OpenAI-compatible + Gemini; reglas NL viajan completas, fail-open con warning |
 | Atribución por dev (path token) | shipped — `POST /cli/{token}/v1/messages`; el endpoint sin token (`POST /v1/messages`) cierra con 401 para que ningún prompt quede sin atribuir |
 | Acción REDACT | shipped (regex layer enmascara y forwardea) |
 | Acción WARN | shipped — viaja en `interactions.action`, visible en `/admin/events`. Notif separada (email/slack) → roadmap |
