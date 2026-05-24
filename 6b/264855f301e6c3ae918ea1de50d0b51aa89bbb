@@ -1,0 +1,38 @@
+scripts/setup-multi-provider.sh
+  s_70b104310a3e82::t_fe3664aa9b10cb 1-278
+specs/16-skill-multi-provider-setup.md
+  s_70b104310a3e82::t_a433cf0c7a7c02 165-166
+  s_70b104310a3e82::t_778c325426fda9 1-135,142-164,167-178
+  s_70b104310a3e82::t_5e7789ce33e2cc 136-141
+specs/README.md
+  s_5e2cd2bee957c6::t_ee0f1190ab61f7 70
+  s_70b104310a3e82::t_975b76742f25d5 45
+  s_70b104310a3e82::t_e11225b403dd49 12
+  s_5e2cd2bee957c6::t_1c5e54970b43d0 32-39,41-44
+docs/README.md
+  s_70b104310a3e82::t_886befc9b7991c 1-67
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "6b264855f301e6c3ae918ea1de50d0b51aa89bbb",
+  "prompts": {},
+  "sessions": {
+    "s_5e2cd2bee957c6": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e5766-93da-76de-9947-92df8828ef86",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    },
+    "s_70b104310a3e82": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e5a52-1bf2-7c14-b1ef-8ff4ef662b17",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    }
+  }
+}
