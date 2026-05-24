@@ -1,0 +1,84 @@
+interceptor/app/judge/gemini.py
+  s_5e2cd2bee957c6::t_616b0378ab5d48 1-87
+specs/15-judge-provider-abstraction.md
+  s_5e2cd2bee957c6::t_7fa9746b4fdbd3 256-265,271-279
+  s_5e2cd2bee957c6::t_cf4949f42529e4 280
+  s_47cbaee6c221df::t_4b42cb175b5cbb 1-255,266-270,281-323
+interceptor/app/judge/__init__.py
+  s_5e2cd2bee957c6::t_3e84edfaf87007 1-4
+interceptor/app/config.py
+  s_0f8165e774900e::t_56186b7cb57c2b 13-15
+  s_5e2cd2bee957c6::t_4ee456d9b612cf 20-29
+interceptor/app/nl_layer.py
+  s_5e2cd2bee957c6::t_23ed092e4ed997 19-22,42-43
+  s_5e2cd2bee957c6::t_6741f831ef5371 28-31,49-53,56-59,67
+  s_5e2cd2bee957c6::t_abbe15fefe294b 3-9,17-18,32-34,40,71-72,79,83-85,87-91,94-96,99-105
+  s_5e2cd2bee957c6::t_7ce667b15223c5 44
+  s_c9d91b948edb08::t_5a21aff1c08efc 63,75-76,106,108-113
+README.md
+  s_5e2cd2bee957c6::t_c3ea5b9f1b9a91 125
+  s_5e2cd2bee957c6::t_87ebb87438a830 358
+  s_5e2cd2bee957c6::t_a2c12d2c55ded3 9,92,171,199,213,293,351,386
+interceptor/.env.example
+  s_5e2cd2bee957c6::t_ed44f920854147 9,12-21
+interceptor/app/judge/prompt.py
+  s_5e2cd2bee957c6::t_2a902becba6d0e 89
+  s_5e2cd2bee957c6::t_ee1fb0ec54fccc 18
+  s_5e2cd2bee957c6::t_37e236dc432e06 1-8,10-17,19-88,90-111
+  s_5e2cd2bee957c6::t_fbfd30b8fd32eb 9
+interceptor/README.md
+  s_5e2cd2bee957c6::t_c2daa02ca8b41f 10,20,40,46,107-108,178-181
+interceptor/app/judge/anthropic.py
+  s_5e2cd2bee957c6::t_4bf43761c8931e 1-81
+interceptor/app/judge/factory.py
+  s_5e2cd2bee957c6::t_7c755bff529396 67-70
+  s_5e2cd2bee957c6::t_18c954811c2d82 1-66,71-98
+interceptor/app/judge/types.py
+  s_5e2cd2bee957c6::t_197f03a04289b6 1-27
+interceptor/tests/test_judge_providers.py
+  s_5e2cd2bee957c6::t_05b4f87131b9c6 58
+  s_5e2cd2bee957c6::t_5ac74671bbae43 1-57,59-272
+interceptor/app/judge/openai_compatible.py
+  s_5e2cd2bee957c6::t_b77e3ed5835657 70-74
+  s_5e2cd2bee957c6::t_8a1b1a37d8be68 1-69,75-86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "9178160cef29ccff6aafa9086b409881ad7fa8fd",
+  "prompts": {},
+  "sessions": {
+    "s_0f8165e774900e": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e5718-e4dd-725c-8463-b93360acfe9e",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    },
+    "s_47cbaee6c221df": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e5711-4f2b-7138-907c-6685ef88f12f",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    },
+    "s_5e2cd2bee957c6": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e5766-93da-76de-9947-92df8828ef86",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    },
+    "s_c9d91b948edb08": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e5725-4a1b-73e1-904d-12ff603acd55",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    }
+  }
+}
