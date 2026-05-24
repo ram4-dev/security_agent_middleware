@@ -11,6 +11,7 @@ from typing import Any
 
 from .enums import Action, PolicyLayer
 from .models import Policy
+from .protocols import TextPart
 from .schemas import MessagesRequest
 
 
@@ -33,26 +34,41 @@ class PolicyHit:
         }
 
 
-def extract_texts(req: MessagesRequest) -> list[str]:
+def extract_text_parts(req: MessagesRequest) -> list[TextPart]:
     """Pull every user-authored string from the request body.
 
     System prompts are author-controlled today but admins may inline
     secrets in them, so we scan those too.
     """
-    texts: list[str] = []
+    parts: list[TextPart] = []
 
     if isinstance(req.system, str):
-        texts.append(req.system)
+        parts.append(TextPart("system", "system", req.system))
     elif isinstance(req.system, list):
-        texts.extend(b.get("text", "") for b in req.system if b.get("type") == "text")
+        for index, block in enumerate(req.system):
+            if block.get("type") == "text" and block.get("text"):
+                parts.append(TextPart(f"system[{index}].text", "system", block.get("text", "")))
 
-    for msg in req.messages:
+    for msg_index, msg in enumerate(req.messages):
         if isinstance(msg.content, str):
-            texts.append(msg.content)
+            if msg.content:
+                parts.append(TextPart(f"messages[{msg_index}].content", msg.role, msg.content))
         else:
-            texts.extend(b.get("text", "") for b in msg.content if b.get("type") == "text")
+            for block_index, block in enumerate(msg.content):
+                if block.get("type") == "text" and block.get("text"):
+                    parts.append(
+                        TextPart(
+                            f"messages[{msg_index}].content[{block_index}].text",
+                            msg.role,
+                            block.get("text", ""),
+                        )
+                    )
 
-    return [t for t in texts if t]
+    return parts
+
+
+def extract_texts(req: MessagesRequest) -> list[str]:
+    return [part.text for part in extract_text_parts(req) if part.text]
 
 
 def _as_layer(v: object) -> PolicyLayer:
@@ -63,8 +79,7 @@ def _as_action(v: object) -> Action:
     return v if isinstance(v, Action) else Action(v)
 
 
-def run_regex_layer(req: MessagesRequest, policies: list[Policy]) -> list[PolicyHit]:
-    texts = extract_texts(req)
+def run_regex_texts(texts: list[str], policies: list[Policy]) -> list[PolicyHit]:
     hits: list[PolicyHit] = []
 
     for policy in policies:
@@ -92,3 +107,7 @@ def run_regex_layer(req: MessagesRequest, policies: list[Policy]) -> list[Policy
                 break
 
     return hits
+
+
+def run_regex_layer(req: MessagesRequest, policies: list[Policy]) -> list[PolicyHit]:
+    return run_regex_texts(extract_texts(req), policies)
