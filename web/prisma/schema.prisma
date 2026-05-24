@@ -129,20 +129,24 @@ model Policy {
 /// El `prompt` se persiste **redactado** (las regex de credenciales corren
 /// antes de escribir, sin importar si la action final fue LOG).
 model Interaction {
-  id             String                       @id @default(uuid()) @db.Uuid
-  traceId        String                       @unique @map("trace_id")
-  orgId          String                       @default("demo") @map("org_id")
-  userId         String?                      @map("user_id") @db.Uuid // members.id (mismo UUID que auth.users.id cuando integremos Supabase Auth real)
-  requestModel   String                       @map("request_model")
-  prompt         String // SIEMPRE redactado antes de persistir
-  action         Action
-  reason         String
-  policyHits     Json                         @default("[]") @map("policy_hits") // [{layer, policyId, slug, score?}]
-  latencyTotalMs Int                          @map("latency_total_ms")
-  latencyByLayer Json                         @default("{}") @map("latency_by_layer") // {regex, pattern, haiku, upstream}
-  upstreamStatus Int?                         @map("upstream_status") // null si BLOCK (no hay upstream)
-  embedding      Unsupported("vector(1536)")? // poblado por el proxy o backfill del Suggestor
-  createdAt      DateTime                     @default(now()) @map("created_at")
+  id               String                       @id @default(uuid()) @db.Uuid
+  traceId          String                       @unique @map("trace_id")
+  orgId            String                       @default("demo") @map("org_id")
+  userId           String?                      @map("user_id") @db.Uuid // members.id (mismo UUID que auth.users.id cuando integremos Supabase Auth real)
+  requestModel     String                       @map("request_model")
+  protocol         String                       @default("anthropic_messages")
+  integration      String                       @default("claude-code")
+  upstreamProvider String?                      @map("upstream_provider")
+  upstreamModel    String?                      @map("upstream_model")
+  prompt           String // SIEMPRE redactado antes de persistir
+  action           Action
+  reason           String
+  policyHits       Json                         @default("[]") @map("policy_hits") // [{layer, policyId, slug, score?}]
+  latencyTotalMs   Int                          @map("latency_total_ms")
+  latencyByLayer   Json                         @default("{}") @map("latency_by_layer") // {regex, pattern, haiku, upstream}
+  upstreamStatus   Int?                         @map("upstream_status") // null si BLOCK (no hay upstream)
+  embedding        Unsupported("vector(1536)")? // poblado por el proxy o backfill del Suggestor
+  createdAt        DateTime                     @default(now()) @map("created_at")
 
   organization Organization @relation(fields: [orgId], references: [id])
 

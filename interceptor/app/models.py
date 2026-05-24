@@ -12,7 +12,8 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import Column
 from sqlalchemy.dialects.postgresql import ENUM as PgEnum
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PgUUID
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlmodel import Field, SQLModel
 
 from .enums import Action, PolicyDomain, PolicyLayer, PolicySource, Severity
@@ -108,6 +109,10 @@ class Interaction(SQLModel, table=True):
         sa_column=Column(PgUUID(as_uuid=True), nullable=True),
     )
     request_model: str
+    protocol: str = Field(default="anthropic_messages")
+    integration: str = Field(default="claude-code")
+    upstream_provider: str | None = None
+    upstream_model: str | None = None
     prompt: str
     action: Action = Field(sa_column=Column(_pg_enum(Action, "Action")))
     reason: str
