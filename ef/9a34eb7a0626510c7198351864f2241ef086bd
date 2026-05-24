@@ -1,0 +1,95 @@
+interceptor/pyproject.toml
+  s_0f8165e774900e::t_e0df2dc2c36a77 34
+interceptor/app/upstream.py
+  s_0f8165e774900e::t_753d7c95aac409 12,19,40-47,49,54-57,61,65-67,78-79,86,90,96-119
+interceptor/app/main.py
+  s_0f8165e774900e::t_0d851465609b45 26,34-35,37-43,50
+  s_c9d91b948edb08::t_2cf0850e03fc7a 33,292-318,321-333
+  s_0f8165e774900e::t_e45512453f207a 169
+  s_0f8165e774900e::t_389fdf9807ac91 161-166,168,175-179
+  s_0f8165e774900e::t_bc6ca192e767d0 232-291,334-429
+  s_5e2cd2bee957c6::t_5d51a54ba56c8b 36,319-320
+  s_0f8165e774900e::t_21a3caa4f56f65 508-512
+  s_0f8165e774900e::t_ba89a85ece8f22 110-120
+interceptor/tests/test_openai_adapter.py
+  s_0f8165e774900e::t_75c962e6c26dc0 92-94
+  s_0f8165e774900e::t_c804f7e2a62e84 1-91,95-149
+interceptor/app/openai_adapter.py
+  s_5e2cd2bee957c6::t_79058324aa01f2 84-86
+  s_5e2cd2bee957c6::t_598e6155e62df7 26,75-83
+  s_0f8165e774900e::t_170c75f0cf4d86 1-25,27-74,87-216
+specs/13-openai-compatible-adapter.md
+  s_5e2cd2bee957c6::t_ab312a1cbc3462 7-12,195-202,208-215
+  s_7516d0b0b2c434::t_4beae0d4148b8d 1-6,13-194,203-207,216-275
+interceptor/app/cascade.py
+  s_0f8165e774900e::t_0749d65067cfd3 14,37,43,46,48-50,52,54-55,57-67,69-71,82,110-113
+interceptor/tests/test_openai_route.py
+  s_c9d91b948edb08::t_4a6c757f53e8a8 343-345,363
+  s_c9d91b948edb08::t_7645165a27c7f3 229-241
+  s_0f8165e774900e::t_dd6134b346c98c 1-55,72-76,84-86,92-110,165-167,173-207,385-389,395-452
+  s_c9d91b948edb08::t_cff8572d5aea75 56-71,208-228,242-342,346-362,364-384
+  s_0f8165e774900e::t_5e67c1fd7a8463 87-91,168-172,390-394
+  s_0f8165e774900e::t_f1c39982eb8b70 111-164
+  s_70b104310a3e82::t_4fb4e13cb96029 77-83
+interceptor/scripts/smoke_openai_compat_live.py
+  s_47cbaee6c221df::t_a30d5325a13c54 1-29,36-109,115-124,127-141,143-149,154-164,167-169,175-191,193-241
+  s_47cbaee6c221df::t_9a9610034d4553 125-126,142,165-166,192
+  s_47cbaee6c221df::t_d417c36cdf1711 110-114,150-153,170-174
+  s_47cbaee6c221df::t_1078ca246475a3 30-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "ef9a34eb7a0626510c7198351864f2241ef086bd",
+  "prompts": {},
+  "sessions": {
+    "s_0f8165e774900e": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e5718-e4dd-725c-8463-b93360acfe9e",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    },
+    "s_47cbaee6c221df": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e5711-4f2b-7138-907c-6685ef88f12f",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    },
+    "s_5e2cd2bee957c6": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e5766-93da-76de-9947-92df8828ef86",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    },
+    "s_70b104310a3e82": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e5a52-1bf2-7c14-b1ef-8ff4ef662b17",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    },
+    "s_7516d0b0b2c434": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e56fc-1e87-729b-8a69-6e8674a14d55",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    },
+    "s_c9d91b948edb08": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e5725-4a1b-73e1-904d-12ff603acd55",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    }
+  }
+}
