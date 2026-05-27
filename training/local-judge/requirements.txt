@@ -5,6 +5,6 @@ transformers
 datasets
 trl
 peft
-bitsandbytes
+bitsandbytes>=0.46.1
 accelerate
 pyyaml

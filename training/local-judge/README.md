@@ -76,6 +76,12 @@ Sin `TRAIN=1`, el pipeline prepara datos y hace dry-run.
 
 ## Evaluación post-training
 
+En Colab, si aparece `Using bitsandbytes 4-bit quantization requires bitsandbytes`, actualizá:
+
+```bash
+pip install -U "bitsandbytes>=0.46.1"
+```
+
 Smoke corto contra holdout:
 
 ```bash
