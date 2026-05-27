@@ -4,6 +4,12 @@
 
 ---
 
+## Estado actual
+
+Aplicada como landing principal en `web/src/app/page.tsx` y componentes de `web/src/app/_components/`. El índice la considera `v1`; este archivo conserva el checklist original abierto para referencia histórica. Pendientes solo de documentación/QA: reconciliar checkboxes, deploy preview por PR y evidencia Lighthouse si se requiere cierre formal.
+
+---
+
 ## Contexto
 
 El equipo va a tener 3 minutos para pitchear y un repo público para que los jurados naveguen después. La landing es la primera impresión cuando alguien abre el link sin contexto.

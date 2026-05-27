@@ -7,7 +7,9 @@ before the real seed lands in web/. Once `pnpm seed:vdb` exists, drop this.
 
 import asyncio
 import sys
+from datetime import datetime
 from pathlib import Path
+from uuid import uuid4
 
 # Allow running as `python scripts/seed_policies.py` from interceptor/.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -55,6 +57,15 @@ SEED: list[dict] = [
         "default_action": Action.BLOCK,
         "severity": Severity.high,
     },
+    {
+        "slug": "generic-api-key",
+        "domain": PolicyDomain.credentials,
+        "layer": PolicyLayer.regex,
+        "rule": "API key genérica con prefijo sk- compartida en el prompt",
+        "pattern": r"sk-[A-Za-z0-9][A-Za-z0-9_#\-]{12,}",
+        "default_action": Action.BLOCK,
+        "severity": Severity.high,
+    },
 ]
 
 
@@ -64,9 +75,11 @@ async def main(org_id: str = "demo") -> None:
             stmt = (
                 pg_insert(Policy.__table__)
                 .values(
+                    id=uuid4(),
                     org_id=org_id,
                     source=PolicySource.seed.value,
                     is_active=True,
+                    updated_at=datetime.utcnow(),
                     **{
                         k: (v.value if hasattr(v, "value") else v)
                         for k, v in row.items()
@@ -82,6 +95,7 @@ async def main(org_id: str = "demo") -> None:
                         "default_action": row["default_action"].value,
                         "severity": row["severity"].value,
                         "is_active": True,
+                        "updated_at": datetime.utcnow(),
                     },
                 )
             )

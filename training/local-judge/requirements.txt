@@ -1,0 +1,10 @@
+# Local Judge LoRA/QLoRA training environment
+# Install in a GPU training environment, not necessarily on the app/runtime host.
+torch
+transformers
+datasets
+trl
+peft
+bitsandbytes
+accelerate
+pyyaml

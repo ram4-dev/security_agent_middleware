@@ -43,10 +43,17 @@ Layer 1: Claude Code (cliente)                                  │
 | 14 | Harness Integrations | [14-harness-integrations.md](./14-harness-integrations.md) | parcial: opencode funciona vía OpenAI-compatible; faltan guías copiables, smoke scripts, Pi/Aider/LiteLLM/Codex/Gemini |
 | 15 | Judge Provider Abstraction | [15-judge-provider-abstraction.md](./15-judge-provider-abstraction.md) | implementado y smoke OpenCode Go realizado localmente |
 | 16 | Skill + Multi-provider Setup | [16-skill-multi-provider-setup.md](./16-skill-multi-provider-setup.md) | draft inicial: script modular para opencode/Anthropic creado; skill pendiente |
+| 17 | Local Judge Runtime Integration | [17-local-judge-runtime.md](./17-local-judge-runtime.md) | nuevo: implementación pendiente |
+| 18 | Local Judge Service | [18-local-judge-service.md](./18-local-judge-service.md) | nuevo: implementación pendiente |
+| 19 | Local Judge Dataset & Evaluation | [19-local-judge-dataset-eval.md](./19-local-judge-dataset-eval.md) | parcial inicial: dataset smoke, validador, generador, benchmark/scoring y export SFT; teacher online y benchmarks reales pendientes |
+| 20 | Local Judge Training Pipeline | [20-local-judge-training.md](./20-local-judge-training.md) | nuevo: implementación pendiente |
+| 21 | Local Judge Deployment & Observability | [21-local-judge-deployment-observability.md](./21-local-judge-deployment-observability.md) | nuevo: implementación pendiente |
 
 > El antiguo spec `05-user-web.md` (playground multi-rol) fue retirado el 2026-05-09. El "user" final del producto es el dev que usa Claude Code real, no un playground separado.
 
 > **Auth + multi-tenancy** (Auth.js v5 + Google OAuth + CLI device flow): no tiene spec dedicado, vive como sección dentro de `04-admin-web.md` (modelo de session, callback de org-resolution, tablas `cli_tokens`/`cli_device_codes`). Si se vuelve grande, partir a `09-auth-and-cli.md`.
+
+> **Specialized Local Judge**: specs 17–21 bajan a implementación la propuesta conceptual de `docs/concepts/`: runtime en interceptor, servicio vLLM, dataset/evaluación, training y deployment/observabilidad. En estas specs `LOG` representa allow/pass público y `ESCALATE` es solo estado interno de fallback.
 
 ---
 

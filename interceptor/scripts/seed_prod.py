@@ -41,12 +41,10 @@ import argparse
 import asyncio
 import sys
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from sqlalchemy import Column, text
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.dialects.postgresql import UUID as PgUUID
+from sqlalchemy import null, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 # Allow running as `python scripts/seed_prod.py` from interceptor/
@@ -61,13 +59,18 @@ from app.models import Interaction, Policy  # noqa: E402
 # ---------------------------------------------------------------------------
 
 def _ago(days: float = 0, hours: float = 0) -> datetime:
-    """Return a UTC datetime in the past — used to spread seed events over time."""
-    return datetime.now(tz=timezone.utc) - timedelta(days=days, hours=hours)
+    """Return a naive UTC datetime for Postgres timestamp columns."""
+    return (datetime.now(tz=UTC) - timedelta(days=days, hours=hours)).replace(tzinfo=None)
 
 
 def _v(enum_val) -> str:
     """Return the string value of an enum (or the string itself)."""
     return enum_val.value if hasattr(enum_val, "value") else enum_val
+
+
+def _match_config(value):
+    """Use SQL NULL, not JSON null, so policies_match_config_obj passes."""
+    return value if value is not None else null()
 
 
 # ---------------------------------------------------------------------------
@@ -588,7 +591,7 @@ INTERACTIONS: list[dict] = [
     {
         "trace_id": "tr-block-001",
         "request_model": _MODEL,
-        "prompt": "Mi AWS Access Key es AKIAIOSFODNN7EXAMPLE. Cómo la uso para subir archivos a S3?",
+        "prompt": "Mi AWS Access Key es FAKE_AWS_ACCESS_KEY_ID_INVALID. Cómo la uso para subir archivos a S3?",
         "action": Action.BLOCK,
         "reason": "Política 'aws-access-key': AWS Access Key ID detectada. Request bloqueado para evitar exfiltración.",
         "policy_hits": [{"layer": "regex", "slug": "aws-access-key", "score": None}],
@@ -600,7 +603,7 @@ INTERACTIONS: list[dict] = [
     {
         "trace_id": "tr-block-002",
         "request_model": _MODEL,
-        "prompt": "Token de GitHub: ghp_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Ayudame a listar mis repositorios privados.",
+        "prompt": "Token de GitHub: fake_github_pat_invalid. Ayudame a listar mis repositorios privados.",
         "action": Action.BLOCK,
         "reason": "Política 'github-token': GitHub Personal Access Token detectado. Request bloqueado.",
         "policy_hits": [{"layer": "regex", "slug": "github-token", "score": None}],
@@ -814,10 +817,11 @@ async def seed_policies(session, org_id: str) -> int:
         stmt = (
             pg_insert(Policy.__table__)
             .values(
+                id=uuid.uuid5(uuid.NAMESPACE_URL, f"tranquera:{org_id}:policy:{row['slug']}"),
                 org_id=org_id,
                 source=PolicySource.seed.value,
                 is_active=True,
-                match_config=row.get("match_config"),
+                match_config=_match_config(row.get("match_config")),
                 **{
                     k: (_v(v) if k not in ("match_config",) else v)
                     for k, v in row.items()
@@ -831,7 +835,7 @@ async def seed_policies(session, org_id: str) -> int:
                     "layer": _v(row["layer"]),
                     "rule": row["rule"],
                     "pattern": row.get("pattern"),
-                    "match_config": row.get("match_config"),
+                    "match_config": _match_config(row.get("match_config")),
                     "default_action": _v(row["default_action"]),
                     "severity": _v(row["severity"]),
                     "is_active": True,
@@ -881,14 +885,18 @@ async def seed_suggestions(session, org_id: str) -> int:
                     source_hint, status, reject_reason, accepted_policy_id,
                     created_at, decided_at
                 ) VALUES (
-                    :id, :org_id, :proposed_slug, :proposed_domain::\"PolicyDomain\",
-                    :proposed_layer::\"PolicyLayer\", :proposed_rule, :proposed_pattern,
-                    :proposed_match_config::jsonb, :proposed_action::\"Action\",
-                    :proposed_severity::\"Severity\", :match_count, :examples::jsonb,
-                    :source_hint, :status::\"SuggestionStatus\", :reject_reason,
-                    :accepted_policy_id::uuid, :created_at, :decided_at
+                    :id, :org_id, :proposed_slug,
+                    CAST(:proposed_domain AS \"PolicyDomain\"),
+                    CAST(:proposed_layer AS \"PolicyLayer\"),
+                    :proposed_rule, :proposed_pattern,
+                    CAST(:proposed_match_config AS jsonb),
+                    CAST(:proposed_action AS \"Action\"),
+                    CAST(:proposed_severity AS \"Severity\"),
+                    :match_count, CAST(:examples AS jsonb),
+                    :source_hint, CAST(:status AS \"SuggestionStatus\"), :reject_reason,
+                    CAST(:accepted_policy_id AS uuid), :created_at, :decided_at
                 )
-                ON CONFLICT (org_id, proposed_slug) DO NOTHING
+                ON CONFLICT (id) DO NOTHING
             """),
             {
                 **row,

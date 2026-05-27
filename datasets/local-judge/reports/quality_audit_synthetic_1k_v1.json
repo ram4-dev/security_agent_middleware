@@ -1,0 +1,229 @@
+{
+  "conclusion": "synthetic_gpt rows look much higher quality/diversity; synthetic_variant rows are schema-valid and safe but heavily templated and should be quarantined or down-weighted for training until curated.",
+  "dataset": "datasets/local-judge/generated/synthetic_opencode_go_v1.jsonl",
+  "opencode_timing_observations": {
+    "note": "Generation is sequential per risk/batch; reaching 1000 hosted rows can take many hours even without retries/timeouts.",
+    "secret_leak_batch_5_seconds": 118.294,
+    "single_benign_case_seconds": 38.619,
+    "single_credential_abuse_case_seconds": 41.165
+  },
+  "recommendations": [
+    "Use only source=synthetic_gpt for quality-sensitive training until variant rows are curated.",
+    "Keep source=synthetic_variant as smoke/regression coverage or low-weight augmentation, not as the main SFT signal.",
+    "For large hosted generation, add concurrency or async worker support, checkpoint per batch, and split output by source/version.",
+    "Generate larger quality data with a faster local OpenAI-compatible model if available."
+  ],
+  "risk_source_shape_diversity": {
+    "synthetic_gpt": {
+      "BENIGN_REQUEST": {
+        "decisions": {
+          "LOG": 80
+        },
+        "rows": 80,
+        "unique_prompt_shapes": 80
+      },
+      "CREDENTIAL_ABUSE": {
+        "decisions": {
+          "BLOCK": 20
+        },
+        "rows": 20,
+        "unique_prompt_shapes": 20
+      },
+      "DATA_EXFILTRATION": {
+        "decisions": {
+          "BLOCK": 20
+        },
+        "rows": 20,
+        "unique_prompt_shapes": 20
+      },
+      "DESTRUCTIVE_ACTION": {
+        "decisions": {
+          "BLOCK": 12,
+          "WARN": 8
+        },
+        "rows": 20,
+        "unique_prompt_shapes": 20
+      },
+      "PII_LEAK": {
+        "decisions": {
+          "REDACT": 20
+        },
+        "rows": 20,
+        "unique_prompt_shapes": 20
+      },
+      "POLICY_BYPASS": {
+        "decisions": {
+          "BLOCK": 20
+        },
+        "rows": 20,
+        "unique_prompt_shapes": 20
+      },
+      "PRIVATE_CODE_LEAK": {
+        "decisions": {
+          "REDACT": 20
+        },
+        "rows": 20,
+        "unique_prompt_shapes": 20
+      },
+      "PROMPT_INJECTION": {
+        "decisions": {
+          "BLOCK": 20
+        },
+        "rows": 20,
+        "unique_prompt_shapes": 20
+      },
+      "SECRET_LEAK": {
+        "decisions": {
+          "REDACT": 20
+        },
+        "rows": 20,
+        "unique_prompt_shapes": 20
+      },
+      "UNSAFE_TOOL_USE": {
+        "decisions": {
+          "BLOCK": 13,
+          "ESCALATE": 2,
+          "WARN": 5
+        },
+        "rows": 20,
+        "unique_prompt_shapes": 20
+      }
+    },
+    "synthetic_variant": {
+      "BENIGN_REQUEST": {
+        "decisions": {
+          "LOG": 20
+        },
+        "rows": 20,
+        "unique_prompt_shapes": 8
+      },
+      "CREDENTIAL_ABUSE": {
+        "decisions": {
+          "BLOCK": 80
+        },
+        "rows": 80,
+        "unique_prompt_shapes": 7
+      },
+      "DATA_EXFILTRATION": {
+        "decisions": {
+          "BLOCK": 80
+        },
+        "rows": 80,
+        "unique_prompt_shapes": 7
+      },
+      "DESTRUCTIVE_ACTION": {
+        "decisions": {
+          "BLOCK": 26,
+          "WARN": 54
+        },
+        "rows": 80,
+        "unique_prompt_shapes": 8
+      },
+      "PII_LEAK": {
+        "decisions": {
+          "REDACT": 80
+        },
+        "rows": 80,
+        "unique_prompt_shapes": 4
+      },
+      "POLICY_BYPASS": {
+        "decisions": {
+          "BLOCK": 80
+        },
+        "rows": 80,
+        "unique_prompt_shapes": 4
+      },
+      "PRIVATE_CODE_LEAK": {
+        "decisions": {
+          "REDACT": 80
+        },
+        "rows": 80,
+        "unique_prompt_shapes": 80
+      },
+      "PROMPT_INJECTION": {
+        "decisions": {
+          "BLOCK": 80
+        },
+        "rows": 80,
+        "unique_prompt_shapes": 4
+      },
+      "SECRET_LEAK": {
+        "decisions": {
+          "REDACT": 80
+        },
+        "rows": 80,
+        "unique_prompt_shapes": 5
+      },
+      "UNSAFE_TOOL_USE": {
+        "decisions": {
+          "BLOCK": 20,
+          "WARN": 60
+        },
+        "rows": 80,
+        "unique_prompt_shapes": 4
+      }
+    }
+  },
+  "source_summary": {
+    "synthetic_gpt": {
+      "avg_chars": 167.7,
+      "avg_tokens": 23.4,
+      "decision_counts": {
+        "BLOCK": 105,
+        "ESCALATE": 2,
+        "LOG": 80,
+        "REDACT": 60,
+        "WARN": 13
+      },
+      "exact_dup_count": 0,
+      "redact_cases": 60,
+      "redaction_targets": 165,
+      "risk_counts": {
+        "BENIGN_REQUEST": 80,
+        "CREDENTIAL_ABUSE": 20,
+        "DATA_EXFILTRATION": 20,
+        "DESTRUCTIVE_ACTION": 20,
+        "PII_LEAK": 20,
+        "POLICY_BYPASS": 20,
+        "PRIVATE_CODE_LEAK": 20,
+        "PROMPT_INJECTION": 20,
+        "SECRET_LEAK": 20,
+        "UNSAFE_TOOL_USE": 20
+      },
+      "rows": 260,
+      "shape_dup_count": 0,
+      "unique_exact_prompts": 260,
+      "unique_prompt_shapes": 260
+    },
+    "synthetic_variant": {
+      "avg_chars": 83.7,
+      "avg_tokens": 11.4,
+      "decision_counts": {
+        "BLOCK": 366,
+        "LOG": 20,
+        "REDACT": 240,
+        "WARN": 114
+      },
+      "exact_dup_count": 458,
+      "redact_cases": 240,
+      "redaction_targets": 380,
+      "risk_counts": {
+        "BENIGN_REQUEST": 20,
+        "CREDENTIAL_ABUSE": 80,
+        "DATA_EXFILTRATION": 80,
+        "DESTRUCTIVE_ACTION": 80,
+        "PII_LEAK": 80,
+        "POLICY_BYPASS": 80,
+        "PRIVATE_CODE_LEAK": 80,
+        "PROMPT_INJECTION": 80,
+        "SECRET_LEAK": 80,
+        "UNSAFE_TOOL_USE": 80
+      },
+      "rows": 740,
+      "shape_dup_count": 609,
+      "unique_exact_prompts": 282,
+      "unique_prompt_shapes": 131
+    }
+  },
+  "total_rows": 1000
+}

@@ -23,11 +23,13 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from ulid import ULID
 
 from .block_response import synthesize_block_message, synthesize_block_sse
-from .cascade import PolicyHit, run_regex_layer, run_regex_texts
+from .cascade import PolicyHit, extract_text_parts, run_regex_layer, run_regex_texts
 from .cli_auth import CliCaller, resolve_cli_token
 from .config import settings
 from .db import get_session
 from .enums import Action, PolicyLayer, winning_action
+from .local_judge.client import is_enabled as local_judge_enabled
+from .local_judge.runtime import build_local_judge_request, evaluate_local_judge
 from .models import Interaction, Policy
 from .nl_layer import is_enabled as nl_enabled
 from .nl_layer import run_nl_layer, run_nl_texts
@@ -298,38 +300,85 @@ async def _process_openai_chat(
         regex_ms,
     )
 
-    # Reuse the same post-regex NL cascade semantics as the Anthropic route,
-    # but feed the judge protocol-normalized OpenAI text instead of an
-    # Anthropic MessagesRequest schema.
+    # Reuse the same post-regex judge cascade semantics as the Anthropic route,
+    # but feed protocol-normalized OpenAI text instead of an Anthropic schema.
+    nl_policies: list[Policy] | None = None
+    local_judge_accepted = False
     if action == Action.BLOCK:
-        logger.info("[openai-nl] trace=%s skipped reason=regex_blocked", trace_id)
-    elif not nl_enabled():
-        logger.info("[openai-nl] trace=%s skipped reason=no_judge_api_key", trace_id)
+        logger.info("[openai-judge] trace=%s skipped reason=regex_blocked", trace_id)
     else:
-        nl_policies = await _load_active_nl_policies(session, org_id)
-        if not nl_policies:
-            logger.info("[openai-nl] trace=%s skipped reason=no_active_nl_policies", trace_id)
-        else:
+        if local_judge_enabled():
+            nl_policies = await _load_active_nl_policies(session, org_id)
             logger.info(
-                "[openai-nl] trace=%s calling judge policies=%d",
+                "[openai-local-judge] trace=%s calling policies=%d",
                 trace_id,
                 len(nl_policies),
             )
-            nl_started = time.perf_counter()
-            nl_text_parts = extract_openai_nl_text_parts(parsed)
-            nl_hits = await run_nl_texts([part.text for part in nl_text_parts], nl_policies)
-            nl_ms = int((time.perf_counter() - nl_started) * 1000)
-            latency_by_layer["nl"] = nl_ms
-            logger.info(
-                "[openai-nl] trace=%s hits=%d elapsed=%dms slugs=%s",
-                trace_id,
-                len(nl_hits),
-                nl_ms,
-                [h.slug for h in nl_hits],
+            local_started = time.perf_counter()
+            local_eval = await evaluate_local_judge(
+                request=build_local_judge_request(
+                    trace_id=trace_id,
+                    org_id=org_id,
+                    integration=settings.openai_compat_integration,
+                    wire_api="openai_chat",
+                    model_requested=parsed.model,
+                    body_dict=body_dict,
+                    candidate_policies=nl_policies,
+                ),
+                candidate_policies=nl_policies,
+                text_parts=text_parts,
             )
-            if nl_hits:
-                hits = hits + nl_hits
+            local_ms = int((time.perf_counter() - local_started) * 1000)
+            latency_by_layer["local_judge"] = local_ms
+            if local_eval.accepted:
+                local_judge_accepted = True
+                hits = hits + local_eval.hits
                 action = winning_action([h.action for h in hits])
+                logger.info(
+                    "[openai-local-judge] trace=%s accepted hits=%d action=%s elapsed=%dms",
+                    trace_id,
+                    len(local_eval.hits),
+                    action.value,
+                    local_ms,
+                )
+            else:
+                logger.info(
+                    "[openai-local-judge] trace=%s fallback reason=%s elapsed=%dms",
+                    trace_id,
+                    local_eval.fallback_reason,
+                    local_ms,
+                )
+
+        if local_judge_accepted:
+            logger.info("[openai-nl] trace=%s skipped reason=local_judge_accepted", trace_id)
+        elif not nl_enabled():
+            logger.info("[openai-nl] trace=%s skipped reason=no_judge_api_key", trace_id)
+        else:
+            if nl_policies is None:
+                nl_policies = await _load_active_nl_policies(session, org_id)
+            if not nl_policies:
+                logger.info("[openai-nl] trace=%s skipped reason=no_active_nl_policies", trace_id)
+            else:
+                logger.info(
+                    "[openai-nl] trace=%s calling judge policies=%d",
+                    trace_id,
+                    len(nl_policies),
+                )
+                nl_started = time.perf_counter()
+                nl_text_parts = extract_openai_nl_text_parts(parsed)
+                nl_hits = await run_nl_texts([part.text for part in nl_text_parts], nl_policies)
+                nl_ms = int((time.perf_counter() - nl_started) * 1000)
+                latency_by_layer["nl"] = nl_ms
+                logger.info(
+                    "[openai-nl] trace=%s hits=%d elapsed=%dms slugs=%s",
+                    trace_id,
+                    len(nl_hits),
+                    nl_ms,
+                    [h.slug for h in nl_hits],
+                )
+                if nl_hits:
+                    hits = hits + nl_hits
+                    action = winning_action([h.action for h in hits])
 
     response_headers = _diagnostic_headers(
         trace_id=trace_id,
@@ -477,33 +526,86 @@ async def _process_messages(
         trace_id, len(regex_policies), len(hits), action.value, regex_ms,
     )
 
-    # ----- Layer 3: NL judge --------------------------------------
-    # Saltamos si regex ya BLOQUEÓ (no hay nada que sumar) o si el judge
-    # no tiene API key configurada (fail open, comportamiento v0.1).
+    # ----- Local Judge + Layer 3: NL judge ------------------------
+    # Saltamos si regex ya BLOQUEÓ (no hay nada que sumar). Si Local Judge
+    # acepta una decisión, evitamos llamar al judge externo. Si escala/falla,
+    # caemos al NL judge existente.
+    nl_policies: list[Policy] | None = None
+    local_judge_accepted = False
     if action == Action.BLOCK:
-        logger.info("[nl] trace=%s skipped reason=regex_blocked", trace_id)
-    elif not nl_enabled():
-        logger.info("[nl] trace=%s skipped reason=no_judge_api_key", trace_id)
+        logger.info("[judge] trace=%s skipped reason=regex_blocked", trace_id)
     else:
-        nl_policies = await _load_active_nl_policies(session, org_id)
-        if not nl_policies:
-            logger.info("[nl] trace=%s skipped reason=no_active_nl_policies", trace_id)
-        else:
+        if local_judge_enabled():
+            nl_policies = await _load_active_nl_policies(session, org_id)
             logger.info(
-                "[nl] trace=%s calling judge policies=%d",
-                trace_id, len(nl_policies),
+                "[local-judge] trace=%s calling policies=%d",
+                trace_id,
+                len(nl_policies),
             )
-            nl_started = time.perf_counter()
-            nl_hits = await run_nl_layer(parsed, nl_policies)
-            nl_ms = int((time.perf_counter() - nl_started) * 1000)
-            latency_by_layer["nl"] = nl_ms
-            logger.info(
-                "[nl] trace=%s hits=%d elapsed=%dms slugs=%s",
-                trace_id, len(nl_hits), nl_ms, [h.slug for h in nl_hits],
+            local_started = time.perf_counter()
+            local_eval = await evaluate_local_judge(
+                request=build_local_judge_request(
+                    trace_id=trace_id,
+                    org_id=org_id,
+                    integration="claude-code",
+                    wire_api="anthropic_messages",
+                    model_requested=parsed.model,
+                    body_dict=body_dict,
+                    candidate_policies=nl_policies,
+                ),
+                candidate_policies=nl_policies,
+                text_parts=extract_text_parts(parsed),
             )
-            if nl_hits:
-                hits = hits + nl_hits
+            local_ms = int((time.perf_counter() - local_started) * 1000)
+            latency_by_layer["local_judge"] = local_ms
+            if local_eval.accepted:
+                local_judge_accepted = True
+                hits = hits + local_eval.hits
                 action = winning_action([h.action for h in hits])
+                logger.info(
+                    "[local-judge] trace=%s accepted hits=%d action=%s elapsed=%dms",
+                    trace_id,
+                    len(local_eval.hits),
+                    action.value,
+                    local_ms,
+                )
+            else:
+                logger.info(
+                    "[local-judge] trace=%s fallback reason=%s elapsed=%dms",
+                    trace_id,
+                    local_eval.fallback_reason,
+                    local_ms,
+                )
+
+        if local_judge_accepted:
+            logger.info("[nl] trace=%s skipped reason=local_judge_accepted", trace_id)
+        elif not nl_enabled():
+            logger.info("[nl] trace=%s skipped reason=no_judge_api_key", trace_id)
+        else:
+            if nl_policies is None:
+                nl_policies = await _load_active_nl_policies(session, org_id)
+            if not nl_policies:
+                logger.info("[nl] trace=%s skipped reason=no_active_nl_policies", trace_id)
+            else:
+                logger.info(
+                    "[nl] trace=%s calling judge policies=%d",
+                    trace_id,
+                    len(nl_policies),
+                )
+                nl_started = time.perf_counter()
+                nl_hits = await run_nl_layer(parsed, nl_policies)
+                nl_ms = int((time.perf_counter() - nl_started) * 1000)
+                latency_by_layer["nl"] = nl_ms
+                logger.info(
+                    "[nl] trace=%s hits=%d elapsed=%dms slugs=%s",
+                    trace_id,
+                    len(nl_hits),
+                    nl_ms,
+                    [h.slug for h in nl_hits],
+                )
+                if nl_hits:
+                    hits = hits + nl_hits
+                    action = winning_action([h.action for h in hits])
 
     response_headers = _diagnostic_headers(
         trace_id=trace_id,

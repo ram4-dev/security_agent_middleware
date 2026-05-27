@@ -10,6 +10,12 @@
 # testing
 /coverage
 
+# python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
 # next.js
 /.next/
 /out/
@@ -28,6 +34,9 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # local env files
+.env
+.env.*
+!.env.example
 .env*.local
 
 # vercel
@@ -42,3 +51,10 @@ next-env.d.ts
 .mcp.json
 # Firecrawl skill local cache
 .firecrawl/
+# Local Pi runtime state
+.atl/
+.pi/
+
+# Local training environments/artifacts
+training/local-judge/.venv-*/
+artifacts/local-judge/

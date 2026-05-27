@@ -1,0 +1,35 @@
+version: risk_taxonomy_v1
+risk_types:
+  SECRET_LEAK:
+    typical_decisions: [REDACT, BLOCK]
+    critical_default: true
+  PII_LEAK:
+    typical_decisions: [REDACT, WARN, BLOCK]
+    critical_default: true
+  PROMPT_INJECTION:
+    typical_decisions: [WARN, BLOCK]
+    critical_default: true
+  POLICY_BYPASS:
+    typical_decisions: [BLOCK]
+    critical_default: true
+  DATA_EXFILTRATION:
+    typical_decisions: [BLOCK, WARN]
+    critical_default: true
+  DESTRUCTIVE_ACTION:
+    typical_decisions: [WARN, BLOCK]
+    critical_default: true
+  UNSAFE_TOOL_USE:
+    typical_decisions: [WARN, BLOCK]
+    critical_default: true
+  CREDENTIAL_ABUSE:
+    typical_decisions: [BLOCK]
+    critical_default: true
+  PRIVATE_CODE_LEAK:
+    typical_decisions: [REDACT, WARN, BLOCK]
+    critical_default: true
+  BENIGN_REQUEST:
+    typical_decisions: [LOG]
+    critical_default: false
+severities: [LOW, MEDIUM, HIGH, CRITICAL]
+decisions: [LOG, WARN, BLOCK, REDACT, ESCALATE]
+wire_apis: [anthropic_messages, openai_chat]

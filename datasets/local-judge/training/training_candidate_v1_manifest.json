@@ -1,0 +1,166 @@
+{
+  "balance": "min",
+  "case_paths": {
+    "test": "datasets/local-judge/training/training_candidate_v1_test.jsonl",
+    "train": "datasets/local-judge/training/training_candidate_v1_train.jsonl",
+    "validation": "datasets/local-judge/training/training_candidate_v1_validation.jsonl"
+  },
+  "checksums": {
+    "cases_test": "ed91b31c8d3c46ad1f688ced8529553b0085b3749ba69bb0759c41461d9efc60",
+    "cases_train": "082f964189dc48fd06951994145a8d76fac66855fbfa465cf2ac0949b30c9f28",
+    "cases_validation": "ca4ef2009255e5a0209cdfdd2cca9c50ad7ba4c0c529fdf1e3cdbcb2e8b8383d",
+    "sft_test": "bc1cb20e1e41b68f0696dae487d8d9ed71b753daae3cec5040548bc58594df9e",
+    "sft_train": "cb94f5f30291355977e87d25778c604bf2261aa99abc6877dda88a663f792e8a",
+    "sft_validation": "fa315d73f2f24208d7867818e0d6852e11ceb91e40a36b82167985286f3d1fb5"
+  },
+  "dataset_version": "training_candidate_v1",
+  "duplicate_case_ids_removed": [],
+  "excluded_by_balance": {
+    "BENIGN_REQUEST": 516,
+    "CREDENTIAL_ABUSE": 483,
+    "DATA_EXFILTRATION": 17,
+    "DESTRUCTIVE_ACTION": 17,
+    "PII_LEAK": 17,
+    "POLICY_BYPASS": 17,
+    "PRIVATE_CODE_LEAK": 17,
+    "PROMPT_INJECTION": 180,
+    "SECRET_LEAK": 0,
+    "UNSAFE_TOOL_USE": 15
+  },
+  "input_counts": {
+    "by_decision": {
+      "BLOCK": 3192,
+      "ESCALATE": 17,
+      "LOG": 1043,
+      "REDACT": 1638,
+      "WARN": 219
+    },
+    "by_risk_type": {
+      "BENIGN_REQUEST": 999,
+      "CREDENTIAL_ABUSE": 966,
+      "DATA_EXFILTRATION": 500,
+      "DESTRUCTIVE_ACTION": 500,
+      "PII_LEAK": 500,
+      "POLICY_BYPASS": 500,
+      "PRIVATE_CODE_LEAK": 500,
+      "PROMPT_INJECTION": 663,
+      "SECRET_LEAK": 483,
+      "UNSAFE_TOOL_USE": 498
+    },
+    "by_source": {
+      "synthetic_gpt": 6109
+    }
+  },
+  "seed": 22,
+  "selected_counts": {
+    "by_decision": {
+      "BLOCK": 2476,
+      "ESCALATE": 16,
+      "LOG": 523,
+      "REDACT": 1600,
+      "WARN": 215
+    },
+    "by_risk_type": {
+      "BENIGN_REQUEST": 483,
+      "CREDENTIAL_ABUSE": 483,
+      "DATA_EXFILTRATION": 483,
+      "DESTRUCTIVE_ACTION": 483,
+      "PII_LEAK": 483,
+      "POLICY_BYPASS": 483,
+      "PRIVATE_CODE_LEAK": 483,
+      "PROMPT_INJECTION": 483,
+      "SECRET_LEAK": 483,
+      "UNSAFE_TOOL_USE": 483
+    }
+  },
+  "sft_paths": {
+    "test": "datasets/local-judge/training/training_candidate_v1_test.sft.jsonl",
+    "train": "datasets/local-judge/training/training_candidate_v1_train.sft.jsonl",
+    "validation": "datasets/local-judge/training/training_candidate_v1_validation.sft.jsonl"
+  },
+  "source_dataset": "datasets/local-judge/generated/synthetic_opencode_go_quality_v1.jsonl",
+  "split_counts": {
+    "test": {
+      "by_decision": {
+        "BLOCK": 251,
+        "ESCALATE": 2,
+        "LOG": 51,
+        "REDACT": 164,
+        "WARN": 22
+      },
+      "by_risk_type": {
+        "BENIGN_REQUEST": 49,
+        "CREDENTIAL_ABUSE": 49,
+        "DATA_EXFILTRATION": 49,
+        "DESTRUCTIVE_ACTION": 49,
+        "PII_LEAK": 49,
+        "POLICY_BYPASS": 49,
+        "PRIVATE_CODE_LEAK": 49,
+        "PROMPT_INJECTION": 49,
+        "SECRET_LEAK": 49,
+        "UNSAFE_TOOL_USE": 49
+      },
+      "total": 490
+    },
+    "train": {
+      "by_decision": {
+        "BLOCK": 1973,
+        "ESCALATE": 11,
+        "LOG": 420,
+        "REDACT": 1279,
+        "WARN": 177
+      },
+      "by_risk_type": {
+        "BENIGN_REQUEST": 386,
+        "CREDENTIAL_ABUSE": 386,
+        "DATA_EXFILTRATION": 386,
+        "DESTRUCTIVE_ACTION": 386,
+        "PII_LEAK": 386,
+        "POLICY_BYPASS": 386,
+        "PRIVATE_CODE_LEAK": 386,
+        "PROMPT_INJECTION": 386,
+        "SECRET_LEAK": 386,
+        "UNSAFE_TOOL_USE": 386
+      },
+      "total": 3860
+    },
+    "validation": {
+      "by_decision": {
+        "BLOCK": 252,
+        "ESCALATE": 3,
+        "LOG": 52,
+        "REDACT": 157,
+        "WARN": 16
+      },
+      "by_risk_type": {
+        "BENIGN_REQUEST": 48,
+        "CREDENTIAL_ABUSE": 48,
+        "DATA_EXFILTRATION": 48,
+        "DESTRUCTIVE_ACTION": 48,
+        "PII_LEAK": 48,
+        "POLICY_BYPASS": 48,
+        "PRIVATE_CODE_LEAK": 48,
+        "PROMPT_INJECTION": 48,
+        "SECRET_LEAK": 48,
+        "UNSAFE_TOOL_USE": 48
+      },
+      "total": 480
+    }
+  },
+  "split_ratios": {
+    "test": 0.1,
+    "train": 0.8,
+    "validation": 0.1
+  },
+  "summary": {
+    "deduped_rows": 6109,
+    "duplicates_removed": 0,
+    "input_rows": 6109,
+    "secret_scan_issues": 0,
+    "selected_rows": 4830,
+    "test_rows": 490,
+    "train_rows": 3860,
+    "validation_rows": 480
+  },
+  "system_prompt": "local-judge/prompts/local_judge_v1.md"
+}

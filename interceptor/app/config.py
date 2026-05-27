@@ -29,5 +29,16 @@ class Settings(BaseSettings):
     # JUDGE_PROVIDER=anthropic with the equivalent JUDGE_* values.
     anthropic_judge_api_key: str | None = None
 
+    # Optional Specialized Local Judge (spec 17). Disabled by default so the
+    # existing regex + NL judge cascade remains unchanged until explicitly
+    # enabled in a deployment.
+    local_judge_enabled: bool = False
+    local_judge_base_url: str | None = "http://localhost:8088"
+    local_judge_timeout_ms: int = 800
+    local_judge_confidence_threshold: float = 0.75
+    local_judge_high_risk_threshold: float = 0.90
+    local_judge_model_version: str = "qwen3-4b-localjudge-prompt-v1"
+    local_judge_fail_open: bool = True
+
 
 settings = Settings()
