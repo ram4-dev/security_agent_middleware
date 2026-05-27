@@ -1,0 +1,21 @@
+training/local-judge/scripts/evaluate_adapter.py
+  s_67f894e418e883::t_3443d45bb45728 1-176
+training/local-judge/README.md
+  s_67f894e418e883::t_8d5165efbd4f75 77-106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "a029c73c7078d8aff77b25af7dfd26aaa0dfb94b",
+  "prompts": {},
+  "sessions": {
+    "s_67f894e418e883": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e5c5b-4f5f-7cad-bf9d-3246167a82ee",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    }
+  }
+}
