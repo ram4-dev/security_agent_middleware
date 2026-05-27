@@ -122,7 +122,7 @@ def _hardware_supports_config(config: dict[str, Any], hardware: dict[str, Any]) 
 def _train(config: dict[str, Any]) -> None:
     import torch
     from datasets import load_dataset
-    from peft import LoraConfig
+    from peft import LoraConfig, prepare_model_for_kbit_training
     from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TrainingArguments
     from trl import SFTTrainer
 
@@ -146,12 +146,19 @@ def _train(config: dict[str, Any]) -> None:
             bnb_4bit_use_double_quant=True,
         )
 
+    compute_dtype = _torch_compute_dtype(torch, config["training"])
     model = AutoModelForCausalLM.from_pretrained(
         config["base_model"],
         quantization_config=quantization_config,
+        torch_dtype=compute_dtype,
         device_map="auto",
         trust_remote_code=True,
     )
+    if config["method"].get("type") == "qlora":
+        model = prepare_model_for_kbit_training(
+            model,
+            use_gradient_checkpointing=bool(config["training"].get("gradient_checkpointing", True)),
+        )
 
     peft_config = LoraConfig(
         r=int(config["method"]["lora_r"]),
