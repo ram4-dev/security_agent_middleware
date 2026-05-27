@@ -1,0 +1,363 @@
+training/local-judge/configs/qwen3_4b_lora_v0.yaml
+  s_67f894e418e883::t_7d0f992ed27c37 1-40
+interceptor/tests/test_openai_route.py
+  s_73fc2562947403::t_a25571def94ae0 11,14
+  s_73fc2562947403::t_fe42ba591f0348 366-435
+  s_73fc2562947403::t_d93e3321aada04 167-271
+specs/19-local-judge-dataset-eval.md
+  s_73fc2562947403::t_a822ee6154a67d 1-8,10-139,141-157,183-265,273,275-279,287,289-300
+  s_73fc2562947403::t_815b7cf1956333 9,266-267,269-272,274,280-281,283-286,288
+  s_73fc2562947403::t_d68e1b2b63cc37 140,158-159,161-162,164,167,181-182,268
+  s_73fc2562947403::t_f48960632ae834 160,163,165-166,168-180,282
+datasets/local-judge/README.md
+  s_73fc2562947403::t_a6f215725a7ca1 1-17,39-52,55-60
+  s_73fc2562947403::t_b78cdb56d70201 18-19,21-23,25,27-38,53-54
+  s_73fc2562947403::t_95ce897eabf802 20,24,26
+training/local-judge/scripts/setup_training_env.sh
+  s_67f894e418e883::t_200333090b7566 1-32
+openspec/changes/openai-compatible-adapter/verify-report.md
+  s_c9d91b948edb08::t_c56cc3f233df46 120,122,124
+  s_47cbaee6c221df::t_c01a22a384063f 5,7,35,38,61,63,76,105,111-112,125-126
+  s_7140a469df780e::t_c2cf0b500e239b 14-28,34,36-37,39-50,56-60,62,64,70,72-74,77-78,82-85,87,91-98,102,104,107,109,114,116-119,121,123
+  s_47cbaee6c221df::t_ad1f7bde9a2046 99-100
+  s_43f23f08caf85f::t_0199190b5355dc 1-4,6,8-13,29-33,51-55,65-69,71,75,79-81,86,88-90,101,103,106,108,110,113,115
+specs/08-ai-suggestor.md
+  s_5e2cd2bee957c6::t_331413030668e1 7-12,63-66,155-156,159-160
+training/local-judge/requirements-dry-run.txt
+  s_67f894e418e883::t_1228652fa5981b 1-2
+docs/concepts/local-judge-evaluation.md
+  s_73fc2562947403::t_eea07f08df3897 1-193
+interceptor/app/local_judge/client.py
+  s_73fc2562947403::t_508dc1b6a042c8 1-70
+specs/README.md
+  s_73fc2562947403::t_49579f10830863 48
+  s_73fc2562947403::t_b04388851398dd 46-47,49-50,56
+scripts/local-judge/export_training_data.py
+  s_73fc2562947403::t_ba3623ef31fe11 1-24,26-41,43-61,63-64,74-88,100-103
+  s_73fc2562947403::t_d6df09230379d6 25,42,62,65-73,89-99
+scripts/local-judge/generate_synthetic_variants.py
+  s_67f894e418e883::t_740e700a2c532f 1-196,198-397
+  s_67f894e418e883::t_3726ce3ed43582 197
+interceptor/scripts/seed_policies.py
+  s_47cbaee6c221df::t_c9f82e62b755d3 10,12,60-68,78,82,98
+datasets/local-judge/training/training_candidate_v1_validation.sft.jsonl
+  s_67f894e418e883::t_de410819b67a31 1-480
+training/local-judge/requirements.txt
+  s_67f894e418e883::t_ddfdf8a5621336 1-10
+training/local-judge/Dockerfile.cuda
+  s_67f894e418e883::t_51c5b99e301109 1-23
+specs/18-local-judge-service.md
+  s_73fc2562947403::t_a7903e3a5c642e 1-253
+interceptor/app/config.py
+  s_73fc2562947403::t_cb1196a891bcd0 32-42
+local-judge/pyproject.toml
+  s_73fc2562947403::t_aa5447898c031e 1-30
+datasets/local-judge/reports/quality_audit_opencode_gpt_1k_v1.json
+  s_67f894e418e883::t_51b9d183a29f74 2-3,14-15,17,19-20,23,37-38,40,50-51
+  s_67f894e418e883::t_3ada87bd23d051 1,4-13,16,18,21-22,24-36,39,41-49,52-53
+openspec/changes/openai-compatible-adapter/apply-progress.md
+  s_0f8165e774900e::t_24a526210294ef 40-41,51-52,54,59
+  s_47cbaee6c221df::t_ed35e543a8ad33 5,31,67-68,72-73
+  s_c9d91b948edb08::t_d2b176537782cc 24-25,29-30,32-33,42-44,60-66,75
+  s_0f8165e774900e::t_0a4bc739fe6422 1-4,6-23,26-28,34-39,45-50,53,55-58,69-71,74,76-79
+interceptor/app/main.py
+  s_73fc2562947403::t_eb2eb852af1759 26,31-32
+  s_73fc2562947403::t_29b61ea733d264 529-534,536,538-539,541-543,545-557,559-563,565-608
+  s_73fc2562947403::t_749b5a7d84c8f5 303-306,308,310-311,313,317-329,331-335,337-381
+scripts/local-judge/dataset_common.py
+  s_73fc2562947403::t_536d713535f697 1-138,146-392
+  s_73fc2562947403::t_02d5cb01ccf9b4 139-145
+datasets/local-judge/training/training_candidate_v1_validation.jsonl
+  s_67f894e418e883::t_de410819b67a31 1-480
+specs/17-local-judge-runtime.md
+  s_73fc2562947403::t_358c212972fe9e 1-264
+training/local-judge/configs/qwen3_4b_lora_debug.yaml
+  s_67f894e418e883::t_15ad32ce9755af 1-41
+.gitignore
+  s_67f894e418e883::t_cf4addb310773d 13-18
+  s_47cbaee6c221df::t_009134c11f568d 37-39
+  s_67f894e418e883::t_8d0d88652102a7 56
+  s_67f894e418e883::t_53f9679f148012 57-60
+datasets/local-judge/generated/synthetic_opencode_go_v1.sft.jsonl
+  s_67f894e418e883::t_5b93da5be43568 201-1000
+  s_67f894e418e883::t_d71e7d1c8e24b1 1-100
+  s_67f894e418e883::t_5e291cdb9d9079 101-200
+datasets/local-judge/generated/synthetic_opencode_go_quality_v1.sft.jsonl
+  s_67f894e418e883::t_51b9d183a29f74 997-1000
+  s_67f894e418e883::t_66e3272d9d6baa 3126-5933
+  s_67f894e418e883::t_3ada87bd23d051 350-996
+  s_67f894e418e883::t_b5dd3d73c5bd4c 1001-3125
+  s_67f894e418e883::t_503879faa2dab5 5934-6109
+  s_67f894e418e883::t_a1e19a362e7e1a 1-349
+datasets/local-judge/labels/haiku_labels_v1.jsonl
+  s_73fc2562947403::t_bdc7cb62da4754 1-10
+local-judge/app/main.py
+  s_73fc2562947403::t_b17e03ca6be056 4,30,49,62-65
+  s_73fc2562947403::t_a350c8191850ab 1-3,5-29,31-48,50-61,66-67
+interceptor/scripts/seed_prod.py
+  s_67f894e418e883::t_3f89a1e19314f8 594,606
+  s_5e2cd2bee957c6::t_5727629d71d9c4 820
+  s_5e2cd2bee957c6::t_f487f44eabd5ba 888-897
+  s_5e2cd2bee957c6::t_7c68eaebe241f0 71-75,824,838
+  s_5e2cd2bee957c6::t_af15deb1b40a67 899
+  s_5e2cd2bee957c6::t_fb93e48f40de28 44,47,63
+  s_5e2cd2bee957c6::t_51934ea0d1d14b 62
+local-judge/app/__init__.py
+  s_73fc2562947403::t_5f7542ec9a50b6 1
+scripts/local-judge/score_benchmark.py
+  s_73fc2562947403::t_93696fbfc9e44b 1-32
+interceptor/tests/test_local_judge_e2e.py
+  s_73fc2562947403::t_13aca0c9d6dd5b 1-9,11-219
+  s_73fc2562947403::t_d2d0c65c079de5 10
+datasets/local-judge/generated/synthetic_opencode_go_quality_v1.jsonl
+  s_67f894e418e883::t_5ab95e3444230b 1-260
+  s_67f894e418e883::t_fe2f7ff6d0637c 997-1000
+  s_67f894e418e883::t_9ce61ab84e5e55 992-996
+  s_67f894e418e883::t_067ca4c9062ba0 261-349
+  s_67f894e418e883::t_36481b31f4404c 4505-4509
+  s_67f894e418e883::t_db1b9c73025e93 5899-5933
+  s_67f894e418e883::t_c0c643d0081356 525-991
+  s_67f894e418e883::t_e31254147af591 1001-3125
+  s_67f894e418e883::t_7ad162a5de5c84 350-524
+  s_67f894e418e883::t_e7ffe3d1a82792 3126-4455
+scripts/local-judge/curate_dataset.py
+  s_73fc2562947403::t_ef4608b2b0ca91 1-47
+interceptor/app/local_judge/types.py
+  s_73fc2562947403::t_0d6a67be72eda5 8,16,24,37
+  s_73fc2562947403::t_f88674680f8c80 1-7,9-15,17-23,25-36,38-139
+local-judge/prompts/local_judge_v1.md
+  s_73fc2562947403::t_98d6533338e80f 1-26
+datasets/local-judge/training/training_candidate_v1_manifest.json
+  s_67f894e418e883::t_04663e5f3d9963 165
+  s_67f894e418e883::t_de410819b67a31 1-164,166
+docs/concepts/specialized-local-judge.md
+  s_73fc2562947403::t_9167b007c35832 1-231
+training/local-judge/scripts/prepare_sft_dataset.py
+  s_67f894e418e883::t_7d12ef01cde0f8 1-256,259-287,290-328,336-373
+  s_67f894e418e883::t_3ba4de3a675ce0 257-258,288-289,329-335
+datasets/local-judge/training/training_candidate_v1_train.sft.jsonl
+  s_67f894e418e883::t_de410819b67a31 1-3860
+openspec/config.yaml
+  s_9538660d8d7250::t_e49900790f4d6f 1-172
+local-judge/app/config.py
+  s_73fc2562947403::t_ddd77752e80297 1-23
+datasets/local-judge/reports/quality_audit_opencode_gpt_10k_partial_v1.json
+  s_67f894e418e883::t_4376260be18a3d 2,10,17,34
+  s_67f894e418e883::t_b2e71769e23a4a 5-8,13-14,19-23,25-26,31
+  s_67f894e418e883::t_9440722549af5f 4,11-12,15,24,29-30,32,36,39-41
+  s_67f894e418e883::t_03f4864ebf6e24 1,3,9,16,18,27-28,33,35,37-38,42
+datasets/local-judge/generated/synthetic_opencode_go_smoke_v1.jsonl
+  s_73fc2562947403::t_c5e1bb4a5d9108 2,4
+  s_73fc2562947403::t_749a36916625ba 1
+  s_73fc2562947403::t_e8027938e5d237 3
+local-judge/app/parser.py
+  s_73fc2562947403::t_b662a988554585 1-50
+specs/01-engine-interceptor.md
+  s_5e2cd2bee957c6::t_e8989ab4d4a5f7 207,210-214
+  s_5e2cd2bee957c6::t_3fcda0d34f40c6 7,64,208-209
+  s_67f894e418e883::t_3f89a1e19314f8 255
+interceptor/app/local_judge/runtime.py
+  s_73fc2562947403::t_3383e47eeeaf25 1-238
+specs/21-local-judge-deployment-observability.md
+  s_73fc2562947403::t_746aeb0b2574f3 1-278
+local-judge/app/vllm_client.py
+  s_73fc2562947403::t_615ce2d356653e 1-83
+interceptor/app/local_judge/__init__.py
+  s_73fc2562947403::t_3329a3a5233843 1-29
+scripts/local-judge/run_benchmark.py
+  s_73fc2562947403::t_2e6bf0b8ea928d 1-61
+tests/test_local_judge_dataset.py
+  s_67f894e418e883::t_77fcfc74e2062c 376-419
+  s_73fc2562947403::t_ac00fe4ee65a1d 1-4,6-7,11-59,236-252,420-466,536-551
+  s_73fc2562947403::t_e1d5cc322c5f82 136
+  s_67f894e418e883::t_b162eb7f8d3715 253-352
+  s_73fc2562947403::t_d74d9ee85ae6ea 148-234
+  s_67f894e418e883::t_950ba5ff164ffa 353-375
+  s_73fc2562947403::t_b175479a9621f4 8,10,467-534
+  s_73fc2562947403::t_c0bb269f4c4021 119-120
+  s_73fc2562947403::t_fe96d2ae595abe 535
+  s_67f894e418e883::t_573727174e76dc 9
+  s_73fc2562947403::t_5c1943884b7dc8 5,98-100,235
+  s_73fc2562947403::t_6a7c30cafe1ef1 60-97,101-118,121-135,137-147
+scripts/local-judge/label_with_teacher.py
+  s_73fc2562947403::t_ecf8ded6d4c6d7 1-45
+scripts/local-judge/validate_dataset.py
+  s_73fc2562947403::t_bed789f262671f 1-28
+datasets/local-judge/generated/synthetic_seed_v1.jsonl
+  s_73fc2562947403::t_bdc7cb62da4754 1-10
+local-judge/tests/test_service.py
+  s_73fc2562947403::t_087e29be9e7b57 1-197
+datasets/local-judge/generated/synthetic_opencode_go_v1.jsonl
+  s_73fc2562947403::t_442ab2b4cbb26c 44-46
+  s_67f894e418e883::t_03ea4cc545a3d0 197-200
+  s_73fc2562947403::t_70accfa2f39f72 27-30
+  s_67f894e418e883::t_5f8e263b2b2887 79-100
+  s_73fc2562947403::t_87888445063953 23-26
+  s_73fc2562947403::t_ca28744c291862 6-10
+  s_73fc2562947403::t_c95f4545d2a41c 17-18
+  s_73fc2562947403::t_57f627e44b0aec 31-34
+  s_73fc2562947403::t_d4cce80f6b8d08 1-5
+  s_73fc2562947403::t_724adcfaf329d3 19-22
+  s_73fc2562947403::t_d244e613e934f5 47-50
+  s_67f894e418e883::t_79c91eb7d25715 117-196
+  s_67f894e418e883::t_27ffcdff7460a1 261-1000
+  s_73fc2562947403::t_5366a34b472fde 11-13
+  s_73fc2562947403::t_ef1636726412fd 39-42
+  s_73fc2562947403::t_a905c02be4c767 14-16
+  s_73fc2562947403::t_f173c56d3fdfc1 35-38
+scripts/local-judge/generate_synthetic_dataset.py
+  s_73fc2562947403::t_fb0aaeee715f62 1-215
+training/local-judge/README.md
+  s_67f894e418e883::t_e064b51b8a0702 1-26,28,74-80
+  s_67f894e418e883::t_6a8cd66e2d12c6 27,29-73
+datasets/local-judge/training/training_candidate_v1_test.sft.jsonl
+  s_67f894e418e883::t_de410819b67a31 1-490
+training/local-judge/scripts/run_training_pipeline.sh
+  s_67f894e418e883::t_04aa33718f1e4a 1-28
+local-judge/README.md
+  s_73fc2562947403::t_d3777ef1f9c5e5 1-32
+specs/20-local-judge-training.md
+  s_73fc2562947403::t_7c4ca06e15e09e 1-295
+specs/03-landing-page.md
+  s_5e2cd2bee957c6::t_2fd094aaad9791 7-12
+specs/09-google-workspace-import.md
+  s_5e2cd2bee957c6::t_09375378140074 7-12,52-60,167-170
+training/local-judge/requirements-cuda.txt
+  s_67f894e418e883::t_b1dbb511573857 1-10
+specs/04-admin-web.md
+  s_5e2cd2bee957c6::t_16e004567eba73 7-12,62-63,67,192-193,196
+datasets/local-judge/training/training_candidate_v1_test.jsonl
+  s_67f894e418e883::t_de410819b67a31 1-490
+local-judge/app/risk_taxonomy.py
+  s_73fc2562947403::t_35904b51d987e1 1-16
+scripts/local-judge/generate_synthetic_with_gpt.py
+  s_73fc2562947403::t_61aa51725c41ee 15-44,62-65,70-77,79,85-88,105,107,109-110,134,159-162,183-184,195,197,347-360,364,385-386,390
+  s_73fc2562947403::t_8dd8984e4cc2c4 52,55-56,269
+  s_73fc2562947403::t_a49a711e717f30 78,106,300-305,310-332,334
+  s_73fc2562947403::t_b98bcee7dc1dab 1-6,8-14,45-51,57-61,66-69,90,97,99-104,108,111-113,115-116,118,128-133,135-141,146-158,163-164,168-182,185-194,196,198-202,204-268,270-273,285-297,335-336,361-363,365-367,369-380,387-389,391-393,395-402,405-406,420-425
+  s_73fc2562947403::t_d35b10b337224c 7,80-84,298-299,306-309,333
+  s_73fc2562947403::t_e4fcda36d97245 89,98,117,119,165,167,203,337-346,368,394
+  s_73fc2562947403::t_e190004b484c6e 142-145
+  s_73fc2562947403::t_aa5f91836fb0b1 381-384
+  s_73fc2562947403::t_a674bfef17bcc2 403
+  s_73fc2562947403::t_852298815824d2 407-419
+  s_73fc2562947403::t_af20121b321b82 404
+  s_73fc2562947403::t_c909bf2b60e6df 53-54,274-284
+  s_73fc2562947403::t_03e606f58a1a1f 91-96,114,120-127,166
+local-judge/app/schemas.py
+  s_73fc2562947403::t_dfffcf5269c70c 1-152
+docs/README.md
+  s_73fc2562947403::t_e9ad2e67e84771 24,47-51
+  s_73fc2562947403::t_dbabd007eea7b1 11,23,58
+local-judge/app/prompt.py
+  s_73fc2562947403::t_3613e5c0bf5cb9 1-32
+datasets/local-judge/taxonomy.yaml
+  s_73fc2562947403::t_4102c9dcbc2997 1-35
+datasets/local-judge/golden_v1.jsonl
+  s_73fc2562947403::t_ca73620641cc03 1-10
+datasets/local-judge/training/training_candidate_v1_train.jsonl
+  s_67f894e418e883::t_de410819b67a31 1-3860
+scripts/local-judge/generate_synthetic_parallel.py
+  s_67f894e418e883::t_d06131583aa9c7 79-89,100-101,124-126,142-151,154,167-169,182-183,185-192
+  s_67f894e418e883::t_60abcd632601d1 1-78,90-99,102-123,127-141,152-153,155-166,170-181,184,193-314
+datasets/local-judge/generated/synthetic_opencode_go_iter2_v1.jsonl
+  s_73fc2562947403::t_e386b503994416 1-3
+  s_73fc2562947403::t_71444ce3f7c4ba 7-10
+  s_73fc2562947403::t_931d82adb80a0d 4-6
+interceptor/tests/test_local_judge_client.py
+  s_73fc2562947403::t_d12e75c047bcab 1-168
+local-judge/Dockerfile
+  s_73fc2562947403::t_fe87e1675a867b 1-21
+docs/concepts/README.md
+  s_73fc2562947403::t_d90bd9f02330ba 9,30,32-40,42
+  s_73fc2562947403::t_66a9c7ee4c2c4d 1-8,10-29,31,41
+training/local-judge/scripts/train_lora.py
+  s_67f894e418e883::t_4bd71f3ffae43b 1-23,26-31,34-36,39-45,51-97,119-215
+  s_67f894e418e883::t_2d054e7652738c 24-25,32-33,37-38,46-50,98-118
+interceptor/.env.example
+  s_73fc2562947403::t_262d54ef8a510b 24-33
+local-judge/uv.lock
+  ai_agent 1-644
+datasets/local-judge/reports/quality_audit_synthetic_1k_v1.json
+  s_67f894e418e883::t_4864c16108998d 1-229
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "86ff2d174bd65bdcdae651b55c3838d80895b717",
+  "prompts": {},
+  "sessions": {
+    "s_0f8165e774900e": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e5718-e4dd-725c-8463-b93360acfe9e",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    },
+    "s_43f23f08caf85f": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e5721-76b2-78d9-838e-c18d13ce9026",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    },
+    "s_47cbaee6c221df": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e5711-4f2b-7138-907c-6685ef88f12f",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    },
+    "s_5e2cd2bee957c6": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e5766-93da-76de-9947-92df8828ef86",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    },
+    "s_67f894e418e883": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e5c5b-4f5f-7cad-bf9d-3246167a82ee",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    },
+    "s_7140a469df780e": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e5731-1da8-7849-8963-63324527d684",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    },
+    "s_73fc2562947403": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e5b8c-045b-731b-ac87-83aab9c073c3",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    },
+    "s_9538660d8d7250": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e5714-370c-7095-af72-3b2f783bf310",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    },
+    "s_c9d91b948edb08": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e5725-4a1b-73e1-904d-12ff603acd55",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    }
+  }
+}
