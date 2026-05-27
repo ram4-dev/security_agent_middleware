@@ -1,0 +1,23 @@
+training/local-judge/requirements-cuda.txt
+  s_67f894e418e883::t_8f1787c1498ee1 7
+training/local-judge/README.md
+  s_67f894e418e883::t_686140772c7f13 79-84
+training/local-judge/requirements.txt
+  s_67f894e418e883::t_978ee597158faa 8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "04687a83887260502d95ebaa0eac13be17c4e2fd",
+  "prompts": {},
+  "sessions": {
+    "s_67f894e418e883": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e5c5b-4f5f-7cad-bf9d-3246167a82ee",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    }
+  }
+}
