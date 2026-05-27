@@ -1,0 +1,19 @@
+training/local-judge/scripts/train_lora.py
+  s_67f894e418e883::t_6446c0ef633b2d 125,149,153,157-161
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "9846e80a5f5bae9fa63dc8729efcb6c28b3b2f82",
+  "prompts": {},
+  "sessions": {
+    "s_67f894e418e883": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e5c5b-4f5f-7cad-bf9d-3246167a82ee",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    }
+  }
+}
