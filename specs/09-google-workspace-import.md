@@ -4,6 +4,12 @@
 
 ---
 
+## Estado actual
+
+Implementado en `web/src/app/api/admin/gdoc/import/route.ts`, `web/src/components/gdoc-import-form.tsx`, `/admin/rules`, `/admin/suggestions` y migración `web/prisma/migrations/20260509000002_gdoc_import`. Quedan pendientes solo pruebas/QA formales si se quiere elevar a `v1`.
+
+---
+
 ## Contexto
 
 Las empresas ya tienen sus políticas de seguridad documentadas en Google Docs. Hoy el admin tiene que releer ese doc y traducirlo a mano al rule builder de Tranquera.
@@ -43,15 +49,15 @@ Con este feature: el admin pega la URL del doc → Claude lo lee y extrae N regl
 
 ## Acceptance Criteria
 
-- [ ] Formulario "Importar desde Google Doc" en `/admin/rules`: campo URL + botón "Extraer políticas".
-- [ ] `POST /api/admin/gdoc/import` extrae el `<DOC_ID>` de la URL, fetchea `https://docs.google.com/document/d/<DOC_ID>/export?format=txt`, llama a Haiku y devuelve las propuestas.
-- [ ] Cada propuesta se inserta en `rule_suggestions` con `source_hint='google_workspace'` y `status='pending'`.
-- [ ] Las sugerencias aparecen en `/admin/suggestions` con badge `// gdoc` visualmente diferenciado.
-- [ ] Si la URL no es un Google Doc válido → error: `"La URL no corresponde a un Google Doc válido"`.
-- [ ] Si el doc no es público (fetch devuelve 401/403) → error: `"El documento no es público. Compartilo como 'cualquier persona con el enlace puede ver'"`.
-- [ ] Si el doc tiene más de 30 000 caracteres, se trunca antes de mandar a Haiku y se muestra un aviso al admin.
-- [ ] Si Haiku no encuentra políticas → mensaje: `"No encontramos políticas de seguridad en el documento. Revisá que el contenido describe reglas de datos."`.
-- [ ] El enum `PolicySource` incluye `google_workspace` con su migración correspondiente.
+- [x] Formulario "Importar desde Google Doc" en `/admin/rules`: campo URL + botón "Extraer políticas".
+- [x] `POST /api/admin/gdoc/import` extrae el `<DOC_ID>` de la URL, fetchea `https://docs.google.com/document/d/<DOC_ID>/export?format=txt`, llama a Haiku y devuelve las propuestas.
+- [x] Cada propuesta se inserta en `rule_suggestions` con `source_hint='google_workspace'` y `status='pending'`.
+- [x] Las sugerencias aparecen en `/admin/suggestions` con badge `// gdoc` visualmente diferenciado.
+- [x] Si la URL no es un Google Doc válido → error: `"La URL no corresponde a un Google Doc válido"`.
+- [x] Si el doc no es público (fetch devuelve 401/403) → error: `"El documento no es público. Compartilo como 'cualquier persona con el enlace puede ver'"`.
+- [x] Si el doc tiene más de 30 000 caracteres, se trunca antes de mandar a Haiku y se muestra un aviso al admin.
+- [x] Si Haiku no encuentra políticas → mensaje de no-políticas institucionales encontradas.
+- [x] El enum `PolicySource` incluye `google_workspace` con su migración correspondiente.
 
 ---
 
@@ -158,10 +164,10 @@ Permite distinguir el origen en la UI sin romper el flujo de aprobación existen
 
 ## Tasks
 
-- [ ] **T1** — Migración Prisma: valor `google_workspace` en `PolicySource`, campo `source_hint` en `rule_suggestions`. Done: `pnpm prisma migrate dev` corre sin errores.
-- [ ] **T2** — `POST /api/admin/gdoc/import`: parseo de URL, fetch del contenido, llamada a Haiku con validación zod de la respuesta, inserción en `rule_suggestions`. Done: dado un doc público de prueba, se generan filas en la tabla.
-- [ ] **T3** — UI en `/admin/rules`: `<GdocImportForm>` con estados (idle / loading / success / error). Done: flujo completo desde el admin sin tocar la consola.
-- [ ] **T4** — Badge `// gdoc` en `/admin/suggestions`. Done: las sugerencias de GDocs son visualmente distinguibles de las del AI Suggestor.
+- [x] **T1** — Migración Prisma: valor `google_workspace` en `PolicySource`, campo `source_hint` en `rule_suggestions`. Done: migración versionada.
+- [x] **T2** — `POST /api/admin/gdoc/import`: parseo de URL, fetch del contenido, llamada a Haiku con validación zod de la respuesta, inserción en `rule_suggestions`. Done: dado un doc público de prueba, se generan filas en la tabla.
+- [x] **T3** — UI en `/admin/rules`: `<GdocImportForm>` con estados (idle / loading / success / error). Done: flujo completo desde el admin sin tocar la consola.
+- [x] **T4** — Badge `// gdoc` en `/admin/suggestions`. Done: las sugerencias de GDocs son visualmente distinguibles de las del AI Suggestor.
 
 ---
 

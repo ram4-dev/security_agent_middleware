@@ -1,0 +1,2 @@
+# Lightweight local validation only.
+pyyaml>=6.0.2

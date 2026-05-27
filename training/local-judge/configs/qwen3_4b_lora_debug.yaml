@@ -1,0 +1,41 @@
+run_id: qwen3-4b-localjudge-sft-debug
+base_model: Qwen/Qwen3-4B-Instruct-2507
+prompt_version: local_judge_v1
+dataset:
+  version: training_candidate_v1
+  train: datasets/local-judge/training/training_candidate_v1_train.sft.jsonl
+  validation: datasets/local-judge/training/training_candidate_v1_validation.sft.jsonl
+  test: datasets/local-judge/training/training_candidate_v1_test.sft.jsonl
+  manifest: datasets/local-judge/training/training_candidate_v1_manifest.json
+method:
+  type: qlora
+  lora_r: 8
+  lora_alpha: 16
+  lora_dropout: 0.05
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+training:
+  seed: 22
+  epochs: 1
+  max_steps: 20
+  learning_rate: 0.0002
+  batch_size: 1
+  gradient_accumulation_steps: 4
+  max_seq_length: 4096
+  warmup_ratio: 0.03
+  weight_decay: 0.0
+  logging_steps: 1
+  eval_steps: 10
+  save_steps: 10
+  bf16: true
+  gradient_checkpointing: true
+output:
+  artifact_dir: artifacts/local-judge/qwen3-4b-localjudge-sft-debug
+  adapter_dir: artifacts/local-judge/qwen3-4b-localjudge-sft-debug/adapter
+  reports_dir: training/local-judge/reports

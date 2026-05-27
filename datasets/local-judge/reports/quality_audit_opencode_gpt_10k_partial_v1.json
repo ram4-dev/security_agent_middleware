@@ -1,0 +1,42 @@
+{
+  "blocking_issues_count": 0,
+  "decision_counts": {
+    "BLOCK": 3192,
+    "ESCALATE": 17,
+    "LOG": 1043,
+    "REDACT": 1638,
+    "WARN": 219
+  },
+  "exact_dup_count": 0,
+  "note": "Continuation added 180 rows, then OpenCode returned persistent HTTP 429 after 10-minute wait. Four duplicate prompt rows removed.",
+  "progress_percent": 61.09,
+  "redact_cases": 1638,
+  "redaction_targets": 4030,
+  "remaining_to_10k": 3891,
+  "risk_counts": {
+    "BENIGN_REQUEST": 999,
+    "CREDENTIAL_ABUSE": 966,
+    "DATA_EXFILTRATION": 500,
+    "DESTRUCTIVE_ACTION": 500,
+    "PII_LEAK": 500,
+    "POLICY_BYPASS": 500,
+    "PRIVATE_CODE_LEAK": 500,
+    "PROMPT_INJECTION": 663,
+    "SECRET_LEAK": 483,
+    "UNSAFE_TOOL_USE": 498
+  },
+  "severity_counts": {
+    "CRITICAL": 1982,
+    "HIGH": 2575,
+    "LOW": 1082,
+    "MEDIUM": 470
+  },
+  "shape_dup_count": 0,
+  "source_counts": {
+    "synthetic_gpt": 6109
+  },
+  "target_total": 10000,
+  "total": 6109,
+  "unique_exact_prompts": 6109,
+  "unique_prompt_shapes": 6109
+}

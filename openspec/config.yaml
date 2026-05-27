@@ -1,0 +1,172 @@
+# OpenSpec project configuration for Tranquera.
+# Generated non-destructively by sdd-init because this file was missing.
+
+project:
+  name: tranquera
+  title: Tranquera
+  tagline: "Un paso controlado entre la intención y la respuesta."
+  domain: ai-security-agent-middleware
+  track: "AI Security · Platanus Hack 26 · Buenos Aires · Team 22"
+  primary_spec_source: specs
+  canonical_schema: web/prisma/schema.prisma
+  language:
+    conversation: es
+    artifacts: en
+  summary: >-
+    Corporate policy enforcement middleware for AI coding agents. The current product protects
+    Claude Code via an Anthropic-compatible proxy, with a roadmap toward OpenAI-compatible clients.
+
+product_context:
+  problem: >-
+    Claude Code and similar agents are aligned to model-provider safety policies, but not to each
+    organization's internal security and compliance policies.
+  solution: >-
+    A modifiable proxy applies organization-defined policies at runtime through a Regex → Pattern →
+    Haiku judge cascade and records auditable interactions.
+  current_focus:
+    - Anthropic Messages API proxy for Claude Code.
+    - Admin back-office for rules, events, analytics, team, and suggestions.
+    - CLI onboarding that configures ANTHROPIC_BASE_URL with path-token attribution.
+    - OpenAI-compatible adapter work planned in specs/13-openai-compatible-adapter.md.
+  non_goals:
+    - Custom graph database architecture.
+    - Edge runtime for the interceptor proxy.
+    - User API key storage in the database for the OpenAI-compatible adapter phase.
+
+repo:
+  specs_dir: specs
+  brand_dir: identidad
+  web_dir: web
+  interceptor_dir: interceptor
+  cli_dir: cli
+  research_dir: research
+  read_only_notes:
+    - "research/ is documented as read-only except for adding notes."
+    - "Never read .env files or secret outputs; .env.example files are safe references."
+
+stack:
+  web:
+    framework: "Next.js 16 App Router"
+    runtime: "Node 20+"
+    language: "TypeScript strict"
+    ui: "React 19, Tailwind CSS 4, IBM Plex Sans/Mono"
+    auth: "Auth.js v5 with Google OAuth"
+    orm: "Prisma 7 with @prisma/adapter-pg"
+    package_manager: pnpm
+  interceptor:
+    framework: FastAPI
+    runtime: "Python 3.12+"
+    language: Python
+    http_client: httpx async
+    db: "Postgres 16 + pgvector via SQLModel/asyncpg"
+    package_manager: uv
+  cli:
+    runtime: "Node >=18"
+    package_manager: npm
+    package: tranquera
+  infrastructure:
+    web_hosting: Vercel
+    interceptor_hosting: Railway
+    database: "Postgres 16 + pgvector"
+
+sdd:
+  strict_tdd: true
+  source_of_truth: specs
+  active_change_hint: "specs/13-openai-compatible-adapter.md"
+  review_budget: no-fixed-limit
+  chained_pr_strategy: single-pr-default
+  artifact_store: both
+  phase_rules:
+    proposal:
+      - "Resolve ambiguity before implementation."
+      - "Keep goals, non-goals, and acceptance criteria aligned with specs/README.md."
+    spec:
+      - "Specs are source of truth; update specs before code when behavior is ambiguous or divergent."
+      - "Do not mix spec-only changes with code changes in the same PR unless explicitly approved."
+    design:
+      - "Preserve the single canonical Prisma schema in web/prisma/schema.prisma."
+      - "The Python interceptor reads/writes the shared DB but does not own migrations."
+      - "Prefer cascade-first enforcement before LLM calls to preserve latency and cost budget."
+    tasks:
+      - "Keep tasks reviewable; project convention says one PR per task and each task should be <= 4h."
+      - "Split work if implementation crosses unrelated product areas."
+    apply:
+      - "Follow RED, GREEN, TRIANGULATE, REFACTOR when tests exist or can be added."
+      - "Do not require real provider API keys for parser, BLOCK, REDACT, or adapter unit tests."
+      - "Never persist unredacted secrets in tests, fixtures, logs, or interactions."
+    verify:
+      - "Run the narrowest relevant test command first, then broader checks for touched areas."
+      - "Record exact commands and outcomes."
+
+verification:
+  default_test_command: "cd interceptor && uv run pytest"
+  commands:
+    interceptor:
+      tests: "cd interceptor && uv run pytest"
+      lint: "cd interceptor && uv run ruff check ."
+      dev_server: "cd interceptor && uv run uvicorn app.main:app --reload --port 8080"
+    web:
+      lint: "cd web && pnpm lint"
+      typecheck: "cd web && pnpm typecheck"
+      build: "cd web && pnpm build"
+      dev_server: "cd web && pnpm dev"
+      db_migrate: "cd web && pnpm db:migrate"
+      db_seed: "cd web && pnpm db:seed"
+    cli:
+      smoke: "node cli/bin/tranquera.js --help"
+  detected_test_runners:
+    - area: interceptor
+      runner: pytest
+      evidence: "interceptor/pyproject.toml declares pytest and pytest-asyncio; tool.pytest.ini_options is configured."
+      command: "cd interceptor && uv run pytest"
+    - area: interceptor
+      runner: ruff
+      evidence: "interceptor/pyproject.toml declares ruff and tool.ruff config."
+      command: "cd interceptor && uv run ruff check ."
+    - area: web
+      runner: eslint
+      evidence: "web/package.json script lint=eslint."
+      command: "cd web && pnpm lint"
+    - area: web
+      runner: typescript
+      evidence: "web/package.json script typecheck=tsc --noEmit."
+      command: "cd web && pnpm typecheck"
+    - area: web
+      runner: next-build
+      evidence: "web/package.json script build=prisma generate && next build."
+      command: "cd web && pnpm build"
+    - area: cli
+      runner: none-detected
+      evidence: "cli/package.json has no scripts section."
+      command: null
+
+conventions:
+  actions:
+    values: [BLOCK, REDACT, WARN, LOG]
+    note: "Actions are uppercase literal strings in JSON and DB."
+  protocols:
+    current: anthropic_messages
+    planned:
+      - openai_chat
+  attribution:
+    path_token_routes:
+      - "/cli/{token}/v1/messages"
+      - "/openai/cli/{token}/v1/chat/completions"
+    token_storage: "Tokens are hashed before lookup; do not expose raw tokens in logs or artifacts."
+  headers:
+    canonical_prefix: "x-tranquera-"
+    legacy_prefix_allowed_during_migration: "x-team22-"
+  latency_budget:
+    target_overhead: "<200 ms p50"
+    strategy: "Resolve cheap deterministic layers before LLM judge calls."
+
+security:
+  secrets_guardrail:
+    - "Do not read .env files, private keys, credentials, tokens, passwords, or secret manager outputs."
+    - "Use .env.example only as non-secret documentation when needed."
+    - "Tests for blocked/redacted flows must use fake or clearly redacted placeholders."
+    - "Adapter tests must not require real Anthropic/OpenAI/OpenRouter/LiteLLM API keys."
+  data_handling:
+    - "REDACT must not persist the original secret."
+    - "BLOCK should avoid upstream calls."
+    - "WARN and LOG may forward, but interactions should store only the approved/redacted audit payload."

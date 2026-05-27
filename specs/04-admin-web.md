@@ -4,6 +4,12 @@
 
 ---
 
+## Estado actual
+
+Parcial avanzado. Ya existen admin shell, Auth.js/demo mode, `/admin/rules`, `/admin/events`, `/admin/team`, home dashboard en `/admin`, `/admin/analytics`, `/admin/suggestions` con accept/reject y Google Docs import. Pendientes principales: endpoint formal `/api/admin/metrics`, ruta dedicada `/admin/dashboard` con chart según esta spec, edición de sugerencias antes de aceptar y notificación visual específica para WARN.
+
+---
+
 ## Contexto
 
 El producto se vende a empresas que dan Claude Code a sus devs. La persona que **configura las reglas** es típicamente un compliance officer / security lead — no un dev. Por lo tanto el admin debe:
@@ -53,12 +59,12 @@ Sin admin web, no se pueden modificar reglas sin meterse a SQL. Para la demo es 
 - [x] Login en `/admin` con Google OAuth (Auth.js v5). Modo demo bypass con `?demo=1` mientras `GOOGLE_CLIENT_ID` esté vacío.
 - [x] Primer login Google sin invitación previa → crea org nueva con el user como admin owner (`src/lib/org-resolution.ts`).
 - [x] Admin invita devs por email desde `/admin/team` → quedan en estado pendiente hasta su primer login.
-- [ ] `/admin/dashboard` muestra 4 KPIs: total events 24h, % BLOCK, % REDACT, latencia p50 del proxy.
-- [ ] `/admin/dashboard` muestra gráfico de barras con acciones de los últimos 100 events.
+- [ ] `/admin/dashboard` muestra 4 KPIs: total events 24h, % BLOCK, % REDACT, latencia p50 del proxy. Hay KPIs en `/admin`, falta ruta dedicada/API formal.
+- [ ] `/admin/dashboard` muestra gráfico de barras con acciones de los últimos 100 events. Hay `/admin/analytics`, falta reconciliar con esta ruta.
 - [x] `/admin/rules` lista todas las reglas con `slug`, `layer`, `domain`, `default_action`, toggle on/off.
 - [x] Crear regla NL desde el form → upsert en `policies` vía Prisma. Cambios reflejados en el próximo prompt del proxy (sin caché).
 - [x] `/admin/events` muestra feed con polling 3s. `created_at`, `action` (badge color), `policy_hits[]`, `prompt_redacted` (truncado).
-- [ ] `/admin/suggestions` lista propuestas del Layer 4 con preview de matches retroactivos y CTAs Aceptar / Rechazar / Editar.
+- [ ] `/admin/suggestions` lista propuestas del Layer 4 con preview de matches retroactivos y CTAs Aceptar / Rechazar / Editar. Aceptar/Rechazar landed; Editar pendiente.
 - [x] Todas las pantallas funcionan en desktop Chrome 130+.
 
 ---
@@ -183,11 +189,11 @@ insert into members (org_id, email, role)
 
 - [x] **T1** — Layout admin (`/admin/*`) con sidebar (Eventos / Reglas / Equipo / Sugerencias), header con org + email + signout.
 - [x] **T2** — Auth.js v5 + Google OAuth con Prisma adapter. `proxy.ts` (Next 16 middleware) protege `/admin/*` con session JWT. Modo demo (cookie mock) como fallback cuando `GOOGLE_CLIENT_ID` está vacío.
-- [ ] **T3** — `/api/admin/metrics` que agrega de `interactions` filtrado por `org_id`. KPIs: total 24h, %BLOCK, %REDACT, p50 latencia total.
-- [ ] **T4** — `/admin/dashboard` consumiendo T3 con `<KpiCard>` y `<ActionsBarChart>`. Pendiente.
+- [ ] **T3** — `/api/admin/metrics` que agrega de `interactions` filtrado por `org_id`. KPIs: total 24h, %BLOCK, %REDACT, p50 latencia total. Hay agregación server-side en `/admin`, falta endpoint formal.
+- [ ] **T4** — `/admin/dashboard` consumiendo T3 con `<KpiCard>` y `<ActionsBarChart>`. Hay home dashboard y `/admin/analytics`; falta ruta dedicada según spec.
 - [x] **T5** — `/admin/rules` con form + tabla. Crear regla NL → upsert en `policies`, próximo prompt del proxy ya la usa (sin caché).
 - [x] **T6** — `/admin/events` con `<EventsFeed>` y polling cada 3s. Filtros por action.
-- [ ] **T7** — `/admin/suggestions` consumiendo `/api/admin/suggestions` + acciones accept/reject/edit. Versión gdoc-import landed; AI Suggestor (spec 08) pendiente.
+- [ ] **T7** — `/admin/suggestions` consumiendo `/api/admin/suggestions` + acciones accept/reject/edit. Lista + accept/reject + gdoc landed; edit y suggestor completo pendientes.
 - [ ] **T8** — Notificación visual cuando hay un `WARN` event. Pendiente.
 - [x] **T9** — `/admin/team` para invitar devs por email (status pendiente hasta primer login con Google).
 - [x] **T10** — `/cli/connect?code=…` page con server action `approveDeviceCode` para el browser-side del device flow del CLI.

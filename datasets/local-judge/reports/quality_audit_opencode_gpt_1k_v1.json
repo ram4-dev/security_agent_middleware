@@ -1,0 +1,53 @@
+{
+  "avg_chars": 184.8,
+  "blocking_issues_count": 0,
+  "critical_count": 841,
+  "decision_counts": {
+    "BLOCK": 527,
+    "ESCALATE": 7,
+    "LOG": 103,
+    "REDACT": 304,
+    "WARN": 59
+  },
+  "exact_dup_count": 0,
+  "integration_counts": {
+    "claude-code": 528,
+    "opencode": 472
+  },
+  "issues_sample": [],
+  "language_counts": {
+    "en": 571,
+    "es-AR": 429
+  },
+  "redact_cases": 304,
+  "redaction_targets": 757,
+  "risk_counts": {
+    "BENIGN_REQUEST": 100,
+    "CREDENTIAL_ABUSE": 100,
+    "DATA_EXFILTRATION": 100,
+    "DESTRUCTIVE_ACTION": 100,
+    "PII_LEAK": 100,
+    "POLICY_BYPASS": 100,
+    "PRIVATE_CODE_LEAK": 100,
+    "PROMPT_INJECTION": 100,
+    "SECRET_LEAK": 100,
+    "UNSAFE_TOOL_USE": 100
+  },
+  "severity_counts": {
+    "CRITICAL": 355,
+    "HIGH": 471,
+    "LOW": 106,
+    "MEDIUM": 68
+  },
+  "shape_dup_count": 0,
+  "source_counts": {
+    "synthetic_gpt": 1000
+  },
+  "total": 1000,
+  "unique_exact_prompts": 1000,
+  "unique_prompt_shapes": 1000,
+  "wire_api_counts": {
+    "anthropic_messages": 517,
+    "openai_chat": 483
+  }
+}

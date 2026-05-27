@@ -4,6 +4,12 @@
 
 ---
 
+## Estado actual
+
+Parcial. Existen `web/src/lib/suggestor.ts`, `POST /api/admin/suggestor/run`, `GET /api/admin/suggestions` y cron `/api/cron/suggestor`. La implementación actual analiza LOGs directamente con Haiku y dedup por slugs pendientes; no implementa todavía CLI `pnpm suggestor:run`, embeddings/backfill, clustering, `cluster_signature` ni smoke automatizado.
+
+---
+
 ## Contexto
 
 El Layer 4 es el que **convierte la plataforma de reactiva a proactiva**. La premisa: durante los primeros días el admin configura unas pocas reglas obvias (regex de credenciales, paths conocidos). Pero los patrones reales de filtración aparecen cuando se observan los prompts de los devs reales, agregados.
@@ -54,10 +60,10 @@ El admin decide. El Suggestor **nunca activa reglas por sí solo**.
 - [ ] `pnpm suggestor:run --org=demo` lee `interactions` de los últimos `SUGGESTOR_LOOKBACK_DAYS` filtrando `action='LOG'`.
 - [ ] Si los events tienen `embedding=null`, el job los embebe primero (back-fill).
 - [ ] Clustering produce N clusters con ≥ `SUGGESTOR_MIN_CLUSTER_SIZE` members (default 5).
-- [ ] Para cada cluster, Haiku devuelve un JSON `{slug, label, default_action, reasoning, suggested_pattern?}`.
-- [ ] Inserta en `rule_suggestions` con `preview_matches[]` (3 trace_ids representativos del cluster).
-- [ ] Idempotencia: re-correr el job en la misma ventana no inserta duplicados.
-- [ ] Endpoint `GET /api/admin/suggestions` (definido en spec 04) lee de esta tabla.
+- [ ] Para cada cluster, Haiku devuelve un JSON `{slug, label, default_action, reasoning, suggested_pattern?}`. Implementación actual usa prompts LOG sin clustering.
+- [x] Inserta en `rule_suggestions` con previews retroactivos (`examples`) desde interacciones LOG.
+- [ ] Idempotencia: re-correr el job en la misma ventana no inserta duplicados por `cluster_signature`. Implementación actual dedupea solo contra slugs pendientes.
+- [x] Endpoint `GET /api/admin/suggestions` (definido en spec 04) lee de esta tabla.
 
 ---
 
@@ -146,12 +152,12 @@ Output schema (JSON estricto):
 
 ## Tasks (paralelizables)
 
-- [ ] **T1** — Migración SQL `supabase/migrations/0003_rule_suggestions.sql`. Done: aplica sin error.
-- [ ] **T2** — `scripts/run-suggestor.ts` con CLI args (`--org`, `--lookback-days`, `--dry-run`). Done: imprime el plan en `--dry-run`.
+- [x] **T1** — Migración SQL `rule_suggestions`. Done: schema/migraciones Prisma incluyen la tabla y `source_hint`.
+- [ ] **T2** — `scripts/run-suggestor.ts` con CLI args (`--org`, `--lookback-days`, `--dry-run`). Existe endpoint admin/cron, no CLI.
 - [ ] **T3** — Backfill de embeddings de `interactions` con embedding null. Done: `select count(*) from interactions where embedding is null` baja a 0 después de correr.
 - [ ] **T4** — Implementación del clustering: empezar con `density-clustering` (HDBSCAN-like en TS) o, si no bancan la deps, kmeans con K determinado por elbow simple. Done: clusters generados con >= 5 members.
-- [ ] **T5** — Cliente Haiku con prompt caching del system block. Output parseado contra schema con Zod. Done: dado un cluster mock devuelve un Suggestion válido.
-- [ ] **T6** — Upsert en `rule_suggestions` con dedup por `cluster_signature`. Done: re-correr el job no genera duplicados.
+- [x] **T5** — Cliente Haiku con prompt caching del system block. Output parseado contra schema con Zod. Done: endpoint actual parsea sugerencias con Zod.
+- [ ] **T6** — Upsert en `rule_suggestions` con dedup por `cluster_signature`. Implementación actual crea sugerencias y maneja duplicados por constraint/slug, no por cluster signature.
 - [ ] **T7** — Smoke test: seed de 50 events con 2 patrones obvios → corre el suggestor → genera al menos 2 sugerencias coherentes. Done: assertion en vitest.
 
 ## Verification

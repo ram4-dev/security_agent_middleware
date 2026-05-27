@@ -7,7 +7,7 @@ cascada antes de forwardear.
 **v0.3 alcance**:
 
 - **Layer 1 — Regex**: matchers literales contra el prompt. Acciones `BLOCK` y `LOG` (passthrough).
-- **Layer 3 — NL Judge** (Haiku 4.5): si regex no bloqueó y hay reglas en lenguaje natural activas, manda el prompt + reglas a Haiku en una sola call y aplica el resultado.
+- **Layer 3 — NL Judge** (multiprovider): si regex no bloqueó y hay reglas en lenguaje natural activas, manda el prompt + reglas al judge configurado (Anthropic, OpenCode Go, OpenAI o Gemini) y aplica el resultado.
 - **Atribución por dev** (path-based): además de `POST /v1/messages` (compat) acepta `POST /cli/{token}/v1/messages`. El CLI bakea el token en `ANTHROPIC_BASE_URL=<proxy>/cli/<token>` durante `tranquera setup`, y cada `interactions` queda atado al `member_id` correcto + override del `org_id`. El token se hashea (sha256) y se mira en `cli_tokens`; si no existe / está revocado → 401. Token desconocido en `count_tokens` no bloquea (solo el path real lo hace).
 - Logging estructurado (`[req] [regex] [nl] [judge] [done]`) para tracear cada paso. `[req]` ahora incluye `user=<member_id>` cuando el caller vino vía `/cli/{token}`.
 
@@ -17,7 +17,7 @@ REDACT, WARN y Layer 2 (pattern matcher) quedan para próximas versiones.
 
 - Python 3.12 + FastAPI + uvicorn.
 - SQLModel + asyncpg sobre la Postgres compartida con `web/`.
-- httpx async para reenviar a Anthropic **y** para llamar al judge (Haiku 4.5).
+- httpx async para reenviar a Anthropic/OpenAI-compatible upstreams **y** para llamar al judge multiprovider.
 - `uv` para deps.
 
 > El schema canónico vive en `web/prisma/schema.prisma`. Este servicio
@@ -37,13 +37,13 @@ Después, el interceptor:
 
 ```bash
 cd interceptor
-cp .env.example .env        # editar — ANTHROPIC_JUDGE_API_KEY es la única clave a pegar
+cp .env.example .env        # editar — JUDGE_* configura el NL judge opcional
 uv sync                     # instala deps
 uv run python scripts/seed_policies.py   # 4 reglas regex de credenciales
 uv run uvicorn app.main:app --reload --port 8080
 ```
 
-> **Habilitar el NL judge** (opcional pero recomendado): pegá una API key de Anthropic en `ANTHROPIC_JUDGE_API_KEY` (sacala de <https://console.anthropic.com/settings/keys>). Si está vacía, el proxy se comporta como v0.1 (solo regex + passthrough). El judge corre con la key del servidor — no depende de las credenciales del cliente, así que evita problemas de OAuth scopes y betas no habilitadas.
+> **Habilitar el NL judge** (opcional pero recomendado): configurá `JUDGE_PROVIDER`, `JUDGE_API_KEY`, `JUDGE_MODEL` y, si aplica, `JUDGE_BASE_URL`. Providers soportados: `anthropic`, `opencode-go`, `openai`, `gemini`. Si no hay credenciales, el proxy se comporta como v0.1 (solo regex + passthrough). El judge corre con key del servidor — no depende de las credenciales del cliente. La config legacy `ANTHROPIC_JUDGE_API_KEY` + `ANTHROPIC_UPSTREAM_URL` sigue funcionando como `JUDGE_PROVIDER=anthropic`.
 
 ## Smoke test
 
@@ -104,7 +104,8 @@ interceptor/
 │   ├── models.py           # SQLModel: Policy (read), Interaction (write)
 │   ├── schemas.py          # Pydantic shapes de la Messages API
 │   ├── cascade.py          # Layer 1 — regex matcher
-│   ├── nl_layer.py         # Layer 3 — Haiku 4.5 judge (httpx → Anthropic)
+│   ├── nl_layer.py         # Layer 3 — wrapper provider-agnostic del judge
+│   ├── judge/              # Adapters Anthropic · OpenAI-compatible · Gemini
 │   ├── redact.py           # redacción del prompt antes de persistir
 │   ├── block_response.py   # synthesizer de Message en BLOCK
 │   └── upstream.py         # cliente httpx contra api.anthropic.com
@@ -174,8 +175,10 @@ railway login                 # si no estás logueado
 railway init                  # crea proyecto, o `railway link` para uno existente
 railway variables \
   --set DATABASE_URL='postgresql://postgres:<password>@<host>:5432/postgres' \
-  --set ANTHROPIC_UPSTREAM_URL='https://api.anthropic.com' \
-  --set ANTHROPIC_JUDGE_API_KEY='sk-ant-...' \
+  --set JUDGE_PROVIDER='opencode-go' \
+  --set JUDGE_BASE_URL='https://opencode.ai/zen/go/v1' \
+  --set JUDGE_MODEL='qwen3.6-plus' \
+  --set JUDGE_API_KEY='<redacted>' \
   --set DEFAULT_ORG_ID='demo'
 railway up
 ```

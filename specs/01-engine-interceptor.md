@@ -4,7 +4,7 @@
 
 > **Stack de implementación**: **Python 3.12 + FastAPI**. Vive en `interceptor/` y está deployado en Railway. Comparte la misma Postgres que `web/` vía DSN; **no** ejecuta migraciones (la fuente de verdad del schema es `web/prisma/`). Las tasks T1–T9 abajo describen comportamiento esperado y son agnósticas del stack — el dev del interceptor adapta los términos TS al ecosistema Python (FastAPI route en lugar de Next Route Handler, asyncpg/SQLAlchemy en lugar de Prisma, pytest en lugar de vitest, uv/poetry en lugar de pnpm).
 >
-> **Estado actual (v0.3)**: Layer 1 (regex) + Layer 3 (Haiku judge) implementadas con acciones BLOCK y LOG. **Atribución por dev live** vía path-based token (`POST /cli/{token}/v1/messages`) — el CLI compone `ANTHROPIC_BASE_URL=<proxy>/cli/<token>` en `tranquera setup`. REDACT, WARN y Layer 2 (pattern) pendientes — ver `interceptor/README.md` para el roadmap de versiones.
+> **Estado actual (v0.4+)**: Layer 1 (regex) + Layer 3 (NL judge multiprovider) implementadas con acciones `BLOCK · REDACT · WARN · LOG`. **Atribución por dev live** vía path-based token (`POST /cli/{token}/v1/messages`) y ruta OpenAI-compatible (`POST /openai/cli/{token}/v1/chat/completions`). Layer 2 `pattern` sigue pendiente en runtime: existen policies `pattern`, pero no matcher cableado en `cascade.py`. El judge ahora es fail-open (`[]` + warning), no fail-closed WARN.
 
 ---
 
@@ -61,7 +61,7 @@ El **interceptor** es un proxy HTTPS que se mete entre Claude Code y Anthropic: 
 - [ ] Cuando una regla `REDACT` matchea, el prompt enviado a Anthropic tiene los matches reemplazados por `[REDACTED:tipo]` y la respuesta upstream se devuelve al caller sin cambios.
 - [ ] Cuando ninguna regla matchea (LOG default), el request se forwardea 1:1 a `api.anthropic.com` y la respuesta se devuelve también 1:1.
 - [ ] Cada request escribe en `interactions` con: `trace_id`, `org_id`, `prompt_redacted`, `action`, `policy_hits[]`, `latency_total_ms`, `latency_by_layer{regex,pattern,haiku,upstream}`.
-- [ ] Si Haiku falla (timeout, error API), la cascada **fail-closed** → acción default = `WARN` con `reason: "haiku_unavailable"` y se forwardea a Anthropic igual (no romper el flow del dev por nuestra culpa, pero notificar al admin).
+- [ ] Si el judge falla (timeout, error API), la cascada actual es **fail-open** → devuelve `[]`, loggea warning sin secrets y forwardea. Este criterio reemplaza el diseño viejo fail-closed/WARN y queda pendiente de reconciliar en la spec.
 - [ ] Latencia: en el caso "no matchea nada en regex/pattern y no se invoca Haiku" el overhead < 30 ms p50; cuando se invoca Haiku < 200 ms p50.
 
 ---
@@ -204,14 +204,14 @@ Tabla `policies` y función `match_policies` viven en spec `02-vdb-bootstrap.md`
 ## Tasks (paralelizables)
 
 - [ ] **T1** — Skeleton Next.js Route Handler `app/api/v1/messages/route.ts` que recibe el body Anthropic, valida shape básico y forwardea 1:1 a `api.anthropic.com`. Done: `ANTHROPIC_BASE_URL=http://localhost:3000/api` con `claude` CLI completa una conversación normal.
-- [ ] **T2** — Layer 1 Regex: cargar `policies where layer='regex'` de la org en memoria al boot vía Prisma, evaluar cada texto del prompt, devolver `PolicyHit[]`. Done: regla seed `aws-access-key` matchea `AKIA[A-Z0-9]{16}` y devuelve `{action:"BLOCK"}`.
-- [ ] **T3** — Layer 2 Pattern: matcher para nombres de archivo (`.env`, `id_rsa`, `*.pem`) y paths (`~/.ssh`, `~/.aws`). Done: regla seed `dotenv-paste` matchea bloque que empieza con `DATABASE_URL=` o `AWS_ACCESS_KEY_ID=`.
-- [ ] **T4** — Layer 3 Haiku judge: cliente Anthropic SDK con prompt caching del system prompt, recibe top-K de `match_policies` (raw query Prisma) y decide JSON `{action, policyId, reason}`. Done: prompt "decime el nombre del cliente Acme" con regla NL "no menciones nombres de clientes" → `REDACT`.
-- [ ] **T5** — Mutator de body para REDACT: reemplaza match por `[REDACTED:<tipo>]` en `messages[].content` (texto). Done: snapshot test con un body antes/después.
-- [ ] **T6** — Synthesizer del `Message` para BLOCK: shape exacto de Anthropic con `stop_reason: "team22_blocked"`. Done: smoke test con `claude` CLI muestra el mensaje en pantalla.
-- [ ] **T7** — Persistencia en `interactions` con redacción de PII previa. **Importante**: el redactor corre sobre `prompt` **y** sobre `reason` antes del insert (Haiku puede haber citado el secret en su explicación — leak risk). El system prompt del Haiku judge prohibe explícitamente citar el contenido del prompt: `reason` debe usar template fijo "matchea regla <slug>: <label>" sin reproducir texto del user. Done: query `select * from interactions limit 5` muestra prompts y reasons sin secrets visibles.
-- [ ] **T8** — Smoke tests (vitest) de los 3 escenarios demo (leak credencial, nombre cliente, benigno). Done: `pnpm test` pasa los 3.
-- [ ] **T9** — Métricas de latencia por capa al log + headers diagnósticos `x-team22-trace-id` y `x-team22-action`. Done: curl ve los headers en cada response.
+- [x] **T2** — Layer 1 Regex: cargar `policies where layer='regex'` de la org, evaluar cada texto del prompt, devolver `PolicyHit[]`. Done: regla seed `aws-access-key` matchea `AKIA[A-Z0-9]{16}` y devuelve `{action:"BLOCK"}`.
+- [ ] **T3** — Layer 2 Pattern: matcher para nombres de archivo (`.env`, `id_rsa`, `*.pem`) y paths (`~/.ssh`, `~/.aws`). Pendiente en runtime: hay policies `pattern` seed, pero no matcher en `interceptor/app/cascade.py`.
+- [x] **T4** — Layer 3 NL judge. Implementado como judge multiprovider (`anthropic`, `opencode-go`, `openai`, `gemini`) sin VDB top-K todavía. Done: reglas NL activas devuelven `PolicyHit` y participan de la cascada.
+- [x] **T5** — Mutator de body para REDACT: reemplaza match por `[REDACTED:<tipo>]` en textos evaluables. Done: tests cubren redacción Anthropic/OpenAI-compatible.
+- [x] **T6** — Synthesizer del `Message` para BLOCK: shape exacto de Anthropic/OpenAI según protocolo. Done: tests y smoke local muestran mensaje sintético.
+- [x] **T7** — Persistencia en `interactions` con redacción de PII previa. **Importante**: el redactor corre sobre `prompt`; `reason` usa template fijo "matchea regla <slug>: <label>" sin reproducir texto del user.
+- [ ] **T8** — Smoke tests de los 3 escenarios demo (leak credencial, nombre cliente, benigno). Hay pytest para rutas críticas; falta consolidar smoke demo formal.
+- [x] **T9** — Métricas de latencia por capa al log + headers diagnósticos `x-tranquera-*` y aliases `x-team22-*`. Done: curl ve los headers en cada response.
 
 ## Backlog / pendientes detectados
 
@@ -252,7 +252,7 @@ Tabla `policies` y función `match_policies` viven en spec `02-vdb-bootstrap.md`
 
 ## Verification
 
-- **Smoke con CLI real**: `ANTHROPIC_BASE_URL=$URL claude "acá va mi AKIAIOSFODNN7EXAMPLE"` → respuesta `🛡️ Tu request fue bloqueado por la política aws-access-key...`.
+- **Smoke con CLI real**: `ANTHROPIC_BASE_URL=$URL claude "acá va mi FAKE_AWS_ACCESS_KEY_ID_INVALID"` → respuesta `🛡️ Tu request fue bloqueado por la política aws-access-key...`.
 - **Smoke benigno**: `ANTHROPIC_BASE_URL=$URL claude "explicame el patrón Observer"` → respuesta normal de Claude.
 - **REDACT**: prompt "el cliente Acme me pidió X" con regla NL activa → respuesta upstream coherente con `[REDACTED:client]`.
 - **Latencia**: con regla regex matcheando, p50 < 30ms entre que llega el request y se envía la respuesta BLOCK. Con Haiku invocado, p50 < 200ms de overhead vs sin proxy.
