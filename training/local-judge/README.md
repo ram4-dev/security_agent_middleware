@@ -63,6 +63,8 @@ docker run --gpus all --rm -v "$PWD/artifacts:/workspace/security_agent_middlewa
 - `configs/qwen3_4b_lora_v0.yaml` — QLoRA full v0 sobre `Qwen/Qwen3-4B-Instruct-2507`.
 - `configs/qwen3_4b_lora_debug.yaml` — smoke corto con `max_steps: 20` para validar la máquina GPU antes del run largo.
 
+Las configs usan `bf16: false` y `fp16: false` en `TrainingArguments` para evitar el `GradScaler` de AMP en Colab T4; la cuantización 4-bit sigue usando compute dtype float16 internamente.
+
 ## Pipeline completo
 
 ```bash
@@ -71,6 +73,36 @@ PYTHON_BIN=training/local-judge/.venv-cuda/bin/python TRAIN=1 \
 ```
 
 Sin `TRAIN=1`, el pipeline prepara datos y hace dry-run.
+
+## Evaluación post-training
+
+Smoke corto contra holdout:
+
+```bash
+python training/local-judge/scripts/evaluate_adapter.py \
+  --dataset datasets/local-judge/training/training_candidate_v1_test.jsonl \
+  --adapter artifacts/local-judge/qwen3-4b-localjudge-sft-v0/adapter \
+  --out training/local-judge/reports/eval_qwen3_4b_lora_v0_test_smoke.json \
+  --limit 20
+```
+
+Evaluación completa contra holdout:
+
+```bash
+python training/local-judge/scripts/evaluate_adapter.py \
+  --dataset datasets/local-judge/training/training_candidate_v1_test.jsonl \
+  --adapter artifacts/local-judge/qwen3-4b-localjudge-sft-v0/adapter \
+  --out training/local-judge/reports/eval_qwen3_4b_lora_v0_test.json
+```
+
+Evaluación contra golden:
+
+```bash
+python training/local-judge/scripts/evaluate_adapter.py \
+  --dataset datasets/local-judge/golden_v1.jsonl \
+  --adapter artifacts/local-judge/qwen3-4b-localjudge-sft-v0/adapter \
+  --out training/local-judge/reports/eval_qwen3_4b_lora_v0_golden.json
+```
 
 ## Reglas
 
