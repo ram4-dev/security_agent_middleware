@@ -1,0 +1,25 @@
+training/local-judge/configs/qwen3_4b_lora_v0.yaml
+  s_67f894e418e883::t_025a160f9666a5 35-36
+training/local-judge/scripts/train_lora.py
+  s_67f894e418e883::t_00521bea26d385 5,145,181,187-188,194,196,216-256
+training/local-judge/README.md
+  s_67f894e418e883::t_fa9e5ffda0e439 66-67
+training/local-judge/configs/qwen3_4b_lora_debug.yaml
+  s_67f894e418e883::t_d38c3df8a91e0b 36-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "a3db1a8fcc78fa3072b9ca864ba4b561be41f13d",
+  "prompts": {},
+  "sessions": {
+    "s_67f894e418e883": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e5c5b-4f5f-7cad-bf9d-3246167a82ee",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    }
+  }
+}
