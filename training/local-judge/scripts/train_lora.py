@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import inspect
 import json
 from pathlib import Path
 from typing import Any
@@ -141,7 +142,7 @@ def _train(config: dict[str, Any]) -> None:
         quantization_config = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.bfloat16,
+            bnb_4bit_compute_dtype=_torch_compute_dtype(torch, config["training"]),
             bnb_4bit_use_double_quant=True,
         )
 
@@ -177,21 +178,22 @@ def _train(config: dict[str, Any]) -> None:
         eval_strategy="steps",
         save_strategy="steps",
         bf16=bool(train_cfg.get("bf16", True)),
+        fp16=bool(train_cfg.get("fp16", False)),
         gradient_checkpointing=bool(train_cfg.get("gradient_checkpointing", True)),
         report_to=[],
         seed=int(train_cfg.get("seed", 22)),
     )
 
-    trainer = SFTTrainer(
+    trainer = SFTTrainer(**_sft_trainer_kwargs(
+        SFTTrainer,
         model=model,
         tokenizer=tokenizer,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
         peft_config=peft_config,
-        args=training_args,
+        training_args=training_args,
         max_seq_length=int(train_cfg["max_seq_length"]),
-        dataset_kwargs={"add_special_tokens": False},
-    )
+    ))
     trainer.train()
     trainer.model.save_pretrained(adapter_dir)
     tokenizer.save_pretrained(adapter_dir)
@@ -209,6 +211,49 @@ def _train(config: dict[str, Any]) -> None:
         + "\n",
         encoding="utf-8",
     )
+
+
+def _torch_compute_dtype(torch_module: Any, train_cfg: dict[str, Any]) -> Any:
+    if bool(train_cfg.get("bf16", True)):
+        return torch_module.bfloat16
+    return torch_module.float16
+
+
+def _sft_trainer_kwargs(
+    trainer_cls: Any,
+    *,
+    model: Any,
+    tokenizer: Any,
+    train_dataset: Any,
+    eval_dataset: Any,
+    peft_config: Any,
+    training_args: Any,
+    max_seq_length: int,
+) -> dict[str, Any]:
+    """Build kwargs for both old and new TRL SFTTrainer APIs.
+
+    TRL changed `tokenizer=` to `processing_class=` and moved some SFT-specific
+    options out of the constructor in newer releases. Keeping this small
+    compatibility shim lets the same training script run on Colab's latest TRL
+    and on older pinned environments.
+    """
+    params = set(inspect.signature(trainer_cls.__init__).parameters)
+    kwargs: dict[str, Any] = {
+        "model": model,
+        "train_dataset": train_dataset,
+        "eval_dataset": eval_dataset,
+        "peft_config": peft_config,
+        "args": training_args,
+    }
+    if "tokenizer" in params:
+        kwargs["tokenizer"] = tokenizer
+    elif "processing_class" in params:
+        kwargs["processing_class"] = tokenizer
+    if "max_seq_length" in params:
+        kwargs["max_seq_length"] = max_seq_length
+    if "dataset_kwargs" in params:
+        kwargs["dataset_kwargs"] = {"add_special_tokens": False}
+    return kwargs
 
 
 if __name__ == "__main__":

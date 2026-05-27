@@ -63,6 +63,8 @@ docker run --gpus all --rm -v "$PWD/artifacts:/workspace/security_agent_middlewa
 - `configs/qwen3_4b_lora_v0.yaml` — QLoRA full v0 sobre `Qwen/Qwen3-4B-Instruct-2507`.
 - `configs/qwen3_4b_lora_debug.yaml` — smoke corto con `max_steps: 20` para validar la máquina GPU antes del run largo.
 
+Las configs usan `fp16: true` y `bf16: false` para compatibilidad con Colab T4.
+
 ## Pipeline completo
 
 ```bash
