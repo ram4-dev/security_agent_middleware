@@ -74,6 +74,36 @@ PYTHON_BIN=training/local-judge/.venv-cuda/bin/python TRAIN=1 \
 
 Sin `TRAIN=1`, el pipeline prepara datos y hace dry-run.
 
+## Evaluación post-training
+
+Smoke corto contra holdout:
+
+```bash
+python training/local-judge/scripts/evaluate_adapter.py \
+  --dataset datasets/local-judge/training/training_candidate_v1_test.jsonl \
+  --adapter artifacts/local-judge/qwen3-4b-localjudge-sft-v0/adapter \
+  --out training/local-judge/reports/eval_qwen3_4b_lora_v0_test_smoke.json \
+  --limit 20
+```
+
+Evaluación completa contra holdout:
+
+```bash
+python training/local-judge/scripts/evaluate_adapter.py \
+  --dataset datasets/local-judge/training/training_candidate_v1_test.jsonl \
+  --adapter artifacts/local-judge/qwen3-4b-localjudge-sft-v0/adapter \
+  --out training/local-judge/reports/eval_qwen3_4b_lora_v0_test.json
+```
+
+Evaluación contra golden:
+
+```bash
+python training/local-judge/scripts/evaluate_adapter.py \
+  --dataset datasets/local-judge/golden_v1.jsonl \
+  --adapter artifacts/local-judge/qwen3-4b-localjudge-sft-v0/adapter \
+  --out training/local-judge/reports/eval_qwen3_4b_lora_v0_golden.json
+```
+
 ## Reglas
 
 - No entrenar con filas que fallen secret scan.
